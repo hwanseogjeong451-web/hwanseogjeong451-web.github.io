@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>한자어 퀴즈쇼 · 汉字词问答秀</title>
+<style>
+:root{
+  --bg:#ece8ff; --bg2:#d9d2ff;
+  --stage:#2a1f6b; --stage-ink:#fff8e6;
+  --surface:#ffffff; --ink:#1c1640; --muted:#5f5888;
+  --line:#cfc6f5;
+  --gold:#e8a200; --bulb:#ffd34d; --pink:#e8336f;
+  --good:#0f9b77; --good-bg:#d6f5eb;
+  --bad:#d23c4b; --bad-bg:#fde0e3;
+  --shadow:0 6px 0 #b7aceb;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#120d2e; --bg2:#1d1650;
+    --stage:#2b2075; --stage-ink:#fff8e6;
+    --surface:#211a52; --ink:#f1edff; --muted:#aaa2d6;
+    --line:#3b3180;
+    --gold:#ffc53d; --bulb:#ffd34d; --pink:#ff5c93;
+    --good:#3ddbb0; --good-bg:#0f3d36;
+    --bad:#ff6b7a; --bad-bg:#45182a;
+    --shadow:0 6px 0 #0a0720;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#120d2e; --bg2:#1d1650;
+  --stage:#2b2075; --stage-ink:#fff8e6;
+  --surface:#211a52; --ink:#f1edff; --muted:#aaa2d6;
+  --line:#3b3180;
+  --gold:#ffc53d; --bulb:#ffd34d; --pink:#ff5c93;
+  --good:#3ddbb0; --good-bg:#0f3d36;
+  --bad:#ff6b7a; --bad-bg:#45182a;
+  --shadow:0 6px 0 #0a0720;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0; min-height:100vh; min-height:100dvh;
+  background:radial-gradient(ellipse at 50% -10%, var(--bg2), var(--bg) 60%);
+  background-color:var(--bg);
+  color:var(--ink);
+  font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","PingFang SC",system-ui,sans-serif;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  -webkit-user-select:none; user-select:none;
+  -webkit-touch-callout:none;
+  -webkit-text-size-adjust:100%;
+}
+.zh{font-family:"Songti SC","STSong","Noto Serif SC","SimSun",serif}
+.display{font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;font-weight:900;letter-spacing:-.02em}
+.wrap{max-width:720px;margin:0 auto;padding:16px 16px 40px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.hidden{display:none !important}
+
+/* ---------- Top bar ---------- */
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.pill{background:var(--surface);border:2px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:700;font-size:15px;display:flex;align-items:center;gap:6px}
+.pill small{font-weight:500;color:var(--muted);font-size:12px}
+.score-pill{margin-left:auto;font-size:20px}
+.score-pill b{font-variant-numeric:tabular-nums;color:var(--pink)}
+.combo-pill b{color:var(--gold)}
+.icon-btn{background:var(--surface);border:2px solid var(--line);border-radius:999px;width:40px;height:40px;font-size:18px;display:grid;place-items:center}
+
+/* ---------- Stage (the hero) ---------- */
+.stage{
+  position:relative;background:var(--stage);color:var(--stage-ink);
+  border-radius:28px;padding:34px 20px 26px;text-align:center;overflow:hidden;
+  box-shadow:0 10px 0 #17104a, 0 18px 40px rgba(20,10,70,.35);
+}
+.stage::before{ /* marquee bulbs */
+  content:"";position:absolute;inset:9px;border-radius:22px;pointer-events:none;
+  background:
+    radial-gradient(circle,var(--bulb) 0 3px,transparent 4px) 0 0/22px 22px repeat-x,
+    radial-gradient(circle,var(--bulb) 0 3px,transparent 4px) 0 100%/22px 22px repeat-x;
+  opacity:.85;
+}
+.stage.flash::before{animation:bulbs .5s steps(2) 3}
+@keyframes bulbs{50%{opacity:.25}}
+.q-label{font-size:14px;opacity:.75;margin:0 0 6px}
+.q-emoji{font-size:34px;line-height:1;margin-bottom:4px}
+.q-word{font-size:clamp(64px,17vw,112px);font-weight:900;line-height:1.1;letter-spacing:.06em;margin:0}
+.q-pinyin{font-size:20px;margin-top:6px;color:var(--bulb);font-weight:500;min-height:28px;letter-spacing:.03em}
+.timer{height:10px;border-radius:99px;background:rgba(255,255,255,.15);margin:18px auto 0;max-width:420px;overflow:hidden}
+.timer i{display:block;height:100%;width:100%;background:var(--bulb);border-radius:99px;transform-origin:left;transition:background .3s}
+.timer i.low{background:var(--pink)}
+
+/* ---------- Choices ---------- */
+.prompt{text-align:center;color:var(--muted);margin:22px 0 12px;font-size:15px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.choices.three{grid-template-columns:1fr 1fr 1fr}
+.card{
+  position:relative;background:var(--surface);border:3px solid var(--line);border-radius:20px;
+  padding:22px 8px;font-size:clamp(28px,7vw,40px);font-weight:900;box-shadow:var(--shadow);
+  transition:transform .12s, box-shadow .12s, background .2s, border-color .2s;
+}
+.card .key{position:absolute;top:8px;left:12px;font-size:12px;font-weight:700;color:var(--muted)}
+@media (hover:hover){.card:hover:not(:disabled){transform:translateY(-3px)}}
+.card:active:not(:disabled){transform:translateY(4px);box-shadow:0 2px 0 var(--line)}
+.card:disabled{cursor:default}
+.card.correct{background:var(--good-bg);border-color:var(--good);color:var(--good);animation:pop .4s}
+.card.wrong{background:var(--bad-bg);border-color:var(--bad);color:var(--bad);animation:shake .4s}
+.card.dim{opacity:.4}
+@keyframes pop{40%{transform:scale(1.08)}}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+
+/* ---------- Reveal panel ---------- */
+.reveal{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(700px,100%);z-index:25;background:var(--surface);border:2px solid var(--line);border-bottom:none;border-radius:28px 28px 0 0;padding:20px 20px calc(22px + env(safe-area-inset-bottom,0px));text-align:center;box-shadow:0 -14px 40px rgba(20,10,70,.3);animation:sheet .35s ease-out}
+@keyframes sheet{from{transform:translate(-50%,100%)}}
+.verdict{font-size:22px;margin:0 0 4px}
+.verdict.ok{color:var(--good)} .verdict.no{color:var(--bad)}
+.verdict-sub{color:var(--muted);font-size:14px;margin:0 0 14px}
+.syllables{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.syl{border:2px solid var(--line);border-radius:16px;padding:10px 14px;min-width:78px}
+.syl .h{font-size:30px;font-weight:900}
+.syl .p{font-size:13px;color:var(--muted)}
+.syl .arrow{font-size:14px;color:var(--muted);line-height:1}
+.syl .k{font-size:32px;font-weight:900;color:var(--pink)}
+.note{font-size:14px;color:var(--muted);margin:8px 0 0}
+.row{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.btn{border:none;border-radius:16px;padding:14px 26px;font-weight:900;font-size:18px;background:var(--pink);color:#fff;box-shadow:0 5px 0 #9e1f4a;transition:transform .1s}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 #9e1f4a}
+.btn.ghost{background:var(--surface);color:var(--ink);border:2px solid var(--line);box-shadow:var(--shadow)}
+.btn small{display:block;font-size:12px;font-weight:500;opacity:.85}
+
+/* ---------- Floating points ---------- */
+.float{position:fixed;pointer-events:none;font-weight:900;font-size:30px;color:var(--gold);text-shadow:0 2px 0 rgba(0,0,0,.25);animation:floatUp 1.1s ease-out forwards;z-index:30}
+@keyframes floatUp{to{transform:translateY(-80px);opacity:0}}
+
+/* ---------- Start & end screens ---------- */
+.title-stage{padding:44px 20px 34px}
+.title{font-size:clamp(46px,12vw,76px);line-height:1.05;margin:6px 0 2px;color:var(--stage-ink)}
+.title-zh{font-size:22px;color:var(--bulb);margin:0 0 18px;letter-spacing:.2em}
+.demo{display:inline-flex;align-items:center;gap:12px;background:rgba(255,255,255,.1);border-radius:16px;padding:10px 18px;font-size:26px;font-weight:900}
+.demo .eq{color:var(--bulb);font-size:20px}
+.howto{background:var(--surface);border:2px solid var(--line);border-radius:22px;padding:18px 20px;margin:20px 0}
+.howto p{margin:6px 0;line-height:1.6}
+.howto .zhline{color:var(--muted);font-size:14px}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.mode{background:var(--surface);border:3px solid var(--line);border-radius:22px;padding:18px 14px;text-align:left;box-shadow:var(--shadow)}
+.mode h3{margin:0 0 4px;font-size:22px}
+.mode p{margin:0;color:var(--muted);font-size:14px;line-height:1.5}
+.mode .best{margin-top:8px;font-size:13px;color:var(--pink);font-weight:700}
+@media (hover:hover){.mode:hover{border-color:var(--pink)}}
+.mode:active{transform:translateY(4px)}
+.stars{font-size:52px;letter-spacing:6px;margin:6px 0}
+.stars .off{opacity:.25}
+.rank{font-size:34px;margin:4px 0 0;color:var(--stage-ink)}
+.rank-zh{color:var(--bulb);margin:2px 0 14px}
+.final{font-size:56px;font-weight:900;color:var(--bulb);font-variant-numeric:tabular-nums}
+.stats{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:6px;font-size:15px;opacity:.9}
+.review{margin-top:20px}
+.review h3{margin:0 0 10px;font-size:18px}
+.review-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.rv{background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.rv .zh{font-size:22px;font-weight:900}
+.rv .k{font-size:22px;font-weight:900;color:var(--pink)}
+.rv button{background:none;border:none;font-size:18px;padding:4px}
+.newbest{display:inline-block;background:var(--pink);color:#fff;border-radius:999px;padding:4px 12px;font-weight:900;font-size:14px;margin-bottom:6px}
+
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:20}
+
+@media (max-width:480px){
+  .choices.three{grid-template-columns:1fr}
+  .modes{grid-template-columns:1fr}
+  .card{padding:18px 8px}
+}
+/* ---------- iPad ---------- */
+@media (min-width:768px){
+  .wrap{max-width:860px;padding:24px 28px 48px}
+  .card{font-size:52px;padding:30px 10px;border-radius:26px}
+  .card .key{font-size:14px;top:10px;left:16px}
+  .choices{gap:18px}
+  .pill{font-size:17px;padding:8px 18px}
+  .score-pill{font-size:24px}
+  .icon-btn{width:48px;height:48px;font-size:22px}
+  .btn{font-size:21px;padding:16px 34px;border-radius:18px}
+  .prompt{font-size:17px}
+  .syl{min-width:96px;padding:12px 18px}
+  .syl .h{font-size:38px}
+  .syl .k{font-size:40px}
+  .verdict{font-size:28px}
+  .reveal{padding:24px 28px calc(28px + env(safe-area-inset-bottom,0px))}
+  .mode{padding:24px 22px}
+  .mode h3{font-size:26px}
+  .mode p{font-size:16px}
+  .howto p{font-size:18px}
+}
+@media (min-width:960px) and (orientation:landscape){
+  .wrap{max-width:1160px}
+  #game:not(.hidden){display:grid;grid-template-columns:1.05fr 1fr;grid-template-areas:"top top" "stage prompt" "stage choices";grid-template-rows:auto auto 1fr;column-gap:32px}
+  #game .topbar{grid-area:top}
+  #stage{grid-area:stage;display:flex;flex-direction:column;justify-content:center;min-height:min(520px,calc(100dvh - 150px))}
+  #stage .q-word{font-size:clamp(110px,11vw,150px)}
+  #game .prompt{grid-area:prompt;margin:6px 0 14px;text-align:left}
+  #choices{grid-area:choices;align-content:start}
+  .choices.three{grid-template-columns:1fr}
+  .choices.three .card{padding:24px 10px}
+  #start:not(.hidden){display:grid;grid-template-columns:1.1fr 1fr;gap:28px;align-items:center}
+  #start .stage{grid-row:span 2}
+  #start .howto{margin:0}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms !important;transition:none !important}
+}
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+
+<div class="wrap">
+
+  <!-- ===== Start screen ===== -->
+  <section id="start">
+    <div class="stage title-stage">
+      <p class="q-label">한국어 × 中文</p>
+      <h1 class="title display">한자어 퀴즈쇼</h1>
+      <p class="title-zh zh">汉字词问答秀</p>
+      <div class="demo"><span class="zh">学校</span><span class="eq">xuéxiào ≈</span><span>학교</span></div>
+    </div>
+
+    <div class="howto">
+      <p>중국어 단어를 보고, 소리가 비슷한 <b>한글 단어</b>를 골라요. 빨리 맞힐수록, 연속으로 맞힐수록 점수가 커져요!</p>
+      <p class="zhline zh">看中文词语，选出发音相似的韩文单词。答得越快、连对越多，分数越高！</p>
+    </div>
+
+    <div class="modes">
+      <button class="mode" data-mode="easy">
+        <h3>연습 무대 <span class="zh" style="font-size:16px;color:var(--muted)">练习</span></h3>
+        <p>보기 3개 · 병음 표시 · 20초<br><span class="zh">三个选项，显示拼音</span></p>
+        <div class="best" id="best-easy"></div>
+      </button>
+      <button class="mode" data-mode="hard">
+        <h3>도전 무대 <span class="zh" style="font-size:16px;color:var(--muted)">挑战</span></h3>
+        <p>보기 4개 · 병음 숨김 · 12초<br><span class="zh">四个选项，隐藏拼音</span></p>
+        <div class="best" id="best-hard"></div>
+      </button>
+    </div>
+  </section>
+
+  <!-- ===== Game screen ===== -->
+  <section id="game" class="hidden">
+    <div class="topbar">
+      <button class="icon-btn" id="home" aria-label="처음으로">🏠</button>
+      <div class="pill"><span id="qnum">1</span>/<span id="qtotal">10</span></div>
+      <div class="pill combo-pill">🔥 <b id="combo">0</b> <small>연속</small></div>
+      <div class="pill score-pill">⭐ <b id="score">0</b></div>
+      <button class="icon-btn" id="snd" aria-label="소리 켜고 끄기">🔊</button>
+    </div>
+
+    <div class="stage" id="stage">
+      <p class="q-label">이 단어는 한국어로? · <span class="zh">这个词用韩语怎么说？</span></p>
+      <div class="q-emoji" id="qemoji"></div>
+      <p class="q-word zh" id="qword"></p>
+      <div class="q-pinyin" id="qpinyin"></div>
+      <div class="timer"><i id="timerbar"></i></div>
+    </div>
+
+    <p class="prompt">소리가 비슷한 한글 카드를 골라요 · <span class="zh">选出发音相似的卡片</span></p>
+    <div class="choices" id="choices"></div>
+
+    <div id="reveal" class="reveal hidden"></div>
+  </section>
+
+  <!-- ===== End screen ===== -->
+  <section id="end" class="hidden">
+    <div class="stage title-stage" id="endstage">
+      <div id="newbest"></div>
+      <div class="stars" id="stars"></div>
+      <h2 class="rank display" id="rank"></h2>
+      <p class="rank-zh zh" id="rankzh"></p>
+      <div class="final" id="final">0</div>
+      <div class="stats" id="stats"></div>
+    </div>
+    <div class="row">
+      <button class="btn" id="again">한 번 더!<small class="zh">再来一次</small></button>
+      <button class="btn ghost" id="tohome">무대 고르기<small class="zh">选择模式</small></button>
+    </div>
+    <div class="review" id="review"></div>
+  </section>
+
+</div>
+
+<script>
+/* ---------- Word bank: 중국어 | 병음(글자별) | 한글 | 이모지 | 메모 ---------- */
+const RAW = [
+  "学校|xué xiào|학교|🏫","图书馆|tú shū guǎn|도서관|📚","家族|jiā zú|가족|👨‍👩‍👧",
+  "准备|zhǔn bèi|준비|🎒","运动|yùn dòng|운동|⚽","文化|wén huà|문화|🎎",
+  "音乐|yīn yuè|음악|🎵","电话|diàn huà|전화|📞","地图|dì tú|지도|🗺️",
+  "问题|wèn tí|문제|❓","时间|shí jiān|시간|⏰","世界|shì jiè|세계|🌍",
+  "学生|xué shēng|학생|🧑‍🎓","大学|dà xué|대학|🎓","动物|dòng wù|동물|🐼",
+  "饮食|yǐn shí|음식|🍜","安全|ān quán|안전|🦺","感谢|gǎn xiè|감사|🙏",
+  "自由|zì yóu|자유|🕊️","市场|shì chǎng|시장|🛒","历史|lì shǐ|역사|🏯",
+  "科学|kē xué|과학|🔬","数学|shù xué|수학|➗","天才|tiān cái|천재|💡",
+  "空气|kōng qì|공기|🌬️","有名|yǒu míng|유명|⭐","中国|zhōng guó|중국|🐉",
+  "韩国|hán guó|한국|🏔️","生日|shēng rì|생일|🎂","家具|jiā jù|가구|🛋️",
+  "秘密|mì mì|비밀|🤫","宇宙|yǔ zhòu|우주|🚀","地球|dì qiú|지구|🌏",
+  "太阳|tài yáng|태양|☀️","公园|gōng yuán|공원|🌳","三角形|sān jiǎo xíng|삼각형|🔺",
+  "英雄|yīng xióng|영웅|🦸","温度|wēn dù|온도|🌡️","人口|rén kǒu|인구|👥",
+  "注意|zhù yì|주의|⚠️","道路|dào lù|도로|🛣️",
+  "新闻|xīn wén|신문|📰|한국어 ‘신문’은 报纸(신문지)라는 뜻이에요 · 韩语里“신문”是“报纸”的意思"
+];
+const WORDS = RAW.map(s => { const [zh,py,ko,emoji,note] = s.split("|"); return {zh,py:py.split(" "),ko,emoji,note}; });
+
+const ROUND = 10;
+const MODES = { easy:{choices:3,time:20,pinyin:true}, hard:{choices:4,time:12,pinyin:false} };
+
+const $ = id => document.getElementById(id);
+const shuffle = a => { a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [a[i],a[j]]=[a[j],a[i]]; } return a; };
+
+let S = {};
+let soundOn = true;
+let revealT;
+
+/* ---------- Storage (best scores) ---------- */
+function getBest(m){ try { return +localStorage.getItem("hq-best-"+m) || 0; } catch(e){ return 0; } }
+function setBest(m,v){ try { localStorage.setItem("hq-best-"+m, v); } catch(e){} }
+function showBests(){
+  for (const m of ["easy","hard"]) { const b = getBest(m); $("best-"+m).textContent = b ? `최고 점수 ${b.toLocaleString()}` : ""; }
+}
+
+/* ---------- Sound ---------- */
+let actx;
+function tone(freq, start, dur, type="sine", vol=.09){
+  if (!soundOn) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+    const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + start;
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t+dur);
+    o.connect(g).connect(actx.destination); o.start(t); o.stop(t+dur);
+  }catch(e){}
+}
+const sfxRight = () => { tone(660,0,.15,"triangle"); tone(880,.1,.15,"triangle"); tone(1320,.2,.3,"triangle"); };
+const sfxWrong = () => { tone(220,0,.25,"sawtooth",.04); tone(180,.15,.3,"sawtooth",.04); };
+/* iPad(iOS)는 첫 터치 때 소리를 ‘깨워야’ 이후에 효과음과 발음이 나와요 */
+function unlockAudio(){
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+    const b = actx.createBuffer(1,1,22050), s = actx.createBufferSource();
+    s.buffer = b; s.connect(actx.destination); s.start(0);
+  }catch(e){}
+  try{
+    if (!unlockAudio.done){ const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); unlockAudio.done = true; }
+  }catch(e){}
+}
+function speak(text, lang="ko-KR"){
+  if (!soundOn) return;
+  if (!("speechSynthesis" in window)) return;
+  try{
+    if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text); u.lang = lang; u.rate = 1.0; u.volume = 1;
+    const v = speechSynthesis.getVoices().find(v => v.lang && v.lang.replace("_","-").startsWith(lang.slice(0,2)));
+    if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+function koVoiceMissing(){
+  if (!("speechSynthesis" in window)) return true;
+  try{
+    const vs = speechSynthesis.getVoices();
+    return vs.length > 0 && !vs.some(v => (v.lang||"").toLowerCase().startsWith("ko"));
+  }catch(e){ return false; }
+}
+
+/* ---------- Screens ---------- */
+function show(id){ for (const s of ["start","game","end"]) $(s).classList.toggle("hidden", s!==id); window.scrollTo(0,0); }
+
+function startGame(mode){
+  S = { mode, cfg:MODES[mode], queue:shuffle(WORDS).slice(0,ROUND), idx:0, score:0, combo:0, maxCombo:0, correct:0, missed:[], locked:false };
+  $("score").textContent = "0"; $("combo").textContent = "0"; $("qtotal").textContent = ROUND;
+  show("game"); nextQuestion();
+}
+
+/* 함정 보기: 같은 글자를 공유하는 단어를 우선으로 골라 퍼즐처럼 만들어요 */
+function pickDistractors(w, n){
+  const scored = WORDS.filter(x => x.ko !== w.ko).map(x => {
+    let shared = 0; for (const ch of x.ko) if (w.ko.includes(ch)) shared++;
+    return { x, s: shared*10 + (x.ko.length===w.ko.length ? 4 : 0) + Math.random()*6 };
+  }).sort((a,b) => b.s - a.s);
+  return scored.slice(0,n).map(o => o.x);
+}
+
+function nextQuestion(){
+  const w = S.queue[S.idx];
+  S.current = w; S.locked = false;
+  $("qnum").textContent = S.idx+1;
+  $("qemoji").textContent = w.emoji;
+  $("qword").textContent = w.zh;
+  $("qpinyin").textContent = S.cfg.pinyin ? w.py.join(" ") : "";
+  clearTimeout(revealT); $("reveal").classList.add("hidden");
+
+  const opts = shuffle([w, ...pickDistractors(w, S.cfg.choices-1)]);
+  const box = $("choices"); box.innerHTML = "";
+  box.classList.toggle("three", S.cfg.choices===3);
+  opts.forEach((o,i) => {
+    const b = document.createElement("button");
+    b.className = "card"; b.dataset.ko = o.ko;
+    b.innerHTML = `<span class="key">${i+1}</span>${o.ko}`;
+    b.addEventListener("click", () => answer(o, b));
+    box.appendChild(b);
+  });
+  startTimer();
+}
+
+/* ---------- Timer ---------- */
+function startTimer(from = 1){
+  cancelAnimationFrame(S.raf);
+  const bar = $("timerbar"), total = S.cfg.time*1000, t0 = performance.now();
+  S.remaining = from;
+  const tick = now => {
+    S.remaining = Math.max(0, from - (now - t0)/total);
+    bar.style.transform = `scaleX(${S.remaining})`;
+    bar.classList.toggle("low", S.remaining < .3);
+    if (S.remaining <= 0) { answer(null, null); return; }
+    S.raf = requestAnimationFrame(tick);
+  };
+  S.raf = requestAnimationFrame(tick);
+}
+
+/* ---------- Answer ---------- */
+function answer(choice, btn){
+  if (S.locked) return;
+  S.locked = true;
+  cancelAnimationFrame(S.raf);
+  const w = S.current, ok = choice && choice.ko === w.ko;
+  const cards = [...document.querySelectorAll(".card")];
+  cards.forEach(c => { c.disabled = true; if (c.dataset.ko === w.ko) c.classList.add("correct"); else if (c !== btn) c.classList.add("dim"); });
+
+  if (ok) {
+    S.combo++; S.correct++; S.maxCombo = Math.max(S.maxCombo, S.combo);
+    const speed = Math.round(S.remaining*50);
+    const comboBonus = Math.min(S.combo-1, 5)*20;
+    const gain = 100 + speed + comboBonus;
+    countUp(S.score, S.score+gain); S.score += gain;
+    const r = btn.getBoundingClientRect();
+    floatText(`+${gain}`, r.left + r.width/2, r.top);
+    celebrate(r.left + r.width/2, r.top + r.height/2, S.combo);
+    $("stage").classList.remove("flash"); void $("stage").offsetWidth; $("stage").classList.add("flash");
+    sfxRight();
+  } else {
+    if (btn) btn.classList.add("wrong");
+    S.combo = 0; S.missed.push(w);
+    sfxWrong();
+  }
+  $("combo").textContent = S.combo;
+  clearTimeout(revealT);
+  revealT = setTimeout(() => showReveal(w, ok, choice === null), 750);
+  speak(w.ko);
+}
+
+function showReveal(w, ok, timedOut){
+  const praise = ["정답! 好棒！","맞았어요! 答对了！","완벽해요! 太厉害了！","대단해요! 真聪明！"];
+  let head, sub;
+  if (ok) {
+    head = praise[Math.random()*praise.length|0];
+    sub = S.combo >= 3 ? `🔥 ${S.combo}연속 정답! 콤보 보너스 · ${S.combo}连胜！` : "한자 한 글자가 한글 한 글자가 돼요 · 一个汉字对应一个韩文字";
+  } else {
+    head = timedOut ? "시간 끝! 时间到！" : "아깝다! 差一点！";
+    sub = "괜찮아요, 글자 짝을 보고 기억해요 · 没关系，看看对应关系吧";
+  }
+  const syl = [...w.zh].map((h,i) => `
+    <div class="syl"><div class="h zh">${h}</div><div class="p">${w.py[i]}</div><div class="arrow">↓</div><div class="k">${w.ko[i]}</div></div>`).join("");
+  const last = S.idx === ROUND-1;
+  const el = $("reveal");
+  el.innerHTML = `
+    <p class="verdict display ${ok?"ok":"no"}">${head}</p>
+    <p class="verdict-sub">${sub}</p>
+    <div class="syllables">${syl}</div>
+    ${w.note ? `<p class="note">💡 ${w.note}</p>` : ""}
+    ${koVoiceMissing() ? `<p class="note">🔈 이 기기에 한국어 음성이 없어서 발음이 안 나와요 · 设备上没有韩语语音</p>` : ""}
+    <div class="row">
+      <button class="btn ghost" id="say">🔊 듣기<small class="zh">听发音</small></button>
+      <button class="btn" id="next">${last ? "결과 보기" : "다음 문제"}<small class="zh">${last ? "查看结果" : "下一题"}</small></button>
+    </div>`;
+  el.classList.remove("hidden");
+  $("say").onclick = () => speak(w.ko);
+  $("next").onclick = advance;
+  $("next").focus({preventScroll:true});
+}
+
+function advance(){
+  S.idx++;
+  if (S.idx >= ROUND) endGame(); else nextQuestion();
+}
+
+/* ---------- End ---------- */
+function endGame(){
+  show("end");
+  const c = S.correct, stars = c>=9 ? 3 : c>=6 ? 2 : c>=3 ? 1 : 0;
+  $("stars").innerHTML = [0,1,2].map(i => `<span class="${i<stars?"":"off"}">★</span>`).join("");
+  const ranks = [["다시 도전!","再接再厉！"],["한자어 새싹","汉字词新芽"],["한자어 탐험가","汉字词探险家"],["한자어 마스터","汉字词大师"]];
+  $("rank").textContent = ranks[stars][0];
+  $("rankzh").textContent = ranks[stars][1];
+  $("stats").innerHTML = `<span>맞힌 문제 ${c}/${ROUND}</span><span>최고 연속 ${S.maxCombo}</span>`;
+  const prev = getBest(S.mode);
+  $("newbest").innerHTML = S.score > prev ? `<span class="newbest">🏆 새 최고 기록! 新纪录！</span>` : "";
+  if (S.score > prev) setBest(S.mode, S.score);
+  animateNumber($("final"), 0, S.score, 1200);
+
+  const rv = $("review");
+  if (S.missed.length) {
+    rv.innerHTML = `<h3>다시 보면 좋은 단어 · <span class="zh">再复习一下</span></h3><div class="review-list">${
+      S.missed.map(w => `<div class="rv"><span class="zh">${w.zh}</span><span class="k">${w.ko}</span><button aria-label="${w.ko} 듣기" data-say="${w.ko}">🔊</button></div>`).join("")}</div>`;
+    rv.querySelectorAll("[data-say]").forEach(b => b.onclick = () => speak(b.dataset.say));
+  } else rv.innerHTML = "";
+
+  if (stars >= 2) finale(stars);
+}
+
+/* ---------- Score helpers ---------- */
+function animateNumber(el, from, to, ms){
+  const t0 = performance.now();
+  const step = now => { const p = Math.min(1,(now-t0)/ms), e = 1-Math.pow(1-p,3);
+    el.textContent = Math.round(from + (to-from)*e).toLocaleString(); if (p<1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function countUp(from,to){ animateNumber($("score"), from, to, 600); }
+function floatText(t,x,y){
+  const d = document.createElement("div"); d.className = "float"; d.textContent = t;
+  d.style.left = (x-40)+"px"; d.style.top = (y-20)+"px";
+  document.body.appendChild(d); setTimeout(() => d.remove(), 1200);
+}
+
+/* ---------- Fireworks ---------- */
+const cv = $("fx"), cx = cv.getContext("2d");
+let parts = [], running = false;
+const COLORS = ["#ff4f8b","#ffd34d","#4fd1c5","#7c6cff","#ff8a3d","#ffffff","#62e36b"];
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function resize(){ const dpr = window.devicePixelRatio||1; cv.width = innerWidth*dpr; cv.height = innerHeight*dpr; cx.setTransform(dpr,0,0,dpr,0,0); }
+addEventListener("resize", resize); resize();
+
+function burst(x, y, n=70, power=7){
+  if (reduceMotion) n = Math.min(n, 20);
+  const base = COLORS[Math.random()*COLORS.length|0], alt = COLORS[Math.random()*COLORS.length|0];
+  for (let i=0;i<n;i++){
+    const a = Math.PI*2*i/n + Math.random()*.2, sp = power*(.4+Math.random()*.7);
+    parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:.012+Math.random()*.012,
+      size:2+Math.random()*2.5,color:Math.random()<.7?base:alt,trail:[]});
+  }
+  if (!running){ running = true; requestAnimationFrame(loop); }
+}
+function loop(){
+  cx.clearRect(0,0,innerWidth,innerHeight);
+  cx.globalCompositeOperation = "lighter";
+  parts = parts.filter(p => p.life > 0);
+  for (const p of parts){
+    p.trail.push([p.x,p.y]); if (p.trail.length>5) p.trail.shift();
+    p.vx *= .97; p.vy = p.vy*.97 + .12; p.x += p.vx; p.y += p.vy; p.life -= p.decay;
+    cx.globalAlpha = Math.max(0,p.life);
+    cx.strokeStyle = p.color; cx.lineWidth = p.size; cx.lineCap = "round";
+    cx.beginPath(); cx.moveTo(p.trail[0][0],p.trail[0][1]); cx.lineTo(p.x,p.y); cx.stroke();
+    if (Math.random()<.08){ cx.fillStyle="#fff"; cx.fillRect(p.x,p.y,1.5,1.5); }
+  }
+  cx.globalAlpha = 1; cx.globalCompositeOperation = "source-over";
+  if (parts.length) requestAnimationFrame(loop); else { running = false; cx.clearRect(0,0,innerWidth,innerHeight); }
+}
+function celebrate(x, y, combo){
+  burst(x, y, 80, 8);
+  const extra = Math.min(1 + Math.floor(combo/2), 4);
+  for (let i=0;i<extra;i++)
+    setTimeout(() => burst(innerWidth*(.15+Math.random()*.7), innerHeight*(.12+Math.random()*.35), 60, 6+Math.random()*3), 180 + i*220);
+}
+function finale(stars){
+  const n = stars===3 ? 12 : 6;
+  for (let i=0;i<n;i++)
+    setTimeout(() => { burst(innerWidth*(.1+Math.random()*.8), innerHeight*(.1+Math.random()*.45), 90, 7+Math.random()*3); tone(500+Math.random()*700,0,.2,"triangle",.06); }, i*280);
+}
+
+/* ---------- Events ---------- */
+document.querySelectorAll(".mode").forEach(b => b.addEventListener("click", () => { unlockAudio(); startGame(b.dataset.mode); }));
+$("again").onclick = () => { unlockAudio(); startGame(S.mode); };
+$("snd").onclick = () => {
+  soundOn = !soundOn; $("snd").textContent = soundOn ? "🔊" : "🔇";
+  if (soundOn) unlockAudio(); else { try{ speechSynthesis.cancel(); }catch(e){} }
+};
+/* 다른 앱으로 갔다 오면 타이머가 멈췄다가 이어서 흘러가요 */
+document.addEventListener("visibilitychange", () => {
+  if ($("game").classList.contains("hidden") || S.locked) return;
+  if (document.hidden) cancelAnimationFrame(S.raf); else startTimer(S.remaining);
+});
+try{ speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices(); }catch(e){}
+$("tohome").onclick = () => { showBests(); show("start"); };
+$("home").onclick = () => { cancelAnimationFrame(S.raf); clearTimeout(revealT); $("reveal").classList.add("hidden"); showBests(); show("start"); };
+document.addEventListener("keydown", e => {
+  if ($("game").classList.contains("hidden")) return;
+  const n = parseInt(e.key,10);
+  if (!S.locked && n>=1 && n<=S.cfg.choices){ document.querySelectorAll(".card")[n-1]?.click(); }
+  else if (S.locked && (e.key==="Enter" || e.key===" ") && document.activeElement?.id!=="next" && document.activeElement?.id!=="say"){ e.preventDefault(); advance(); }
+});
+showBests();
+</script>
+</body>
+</html>
