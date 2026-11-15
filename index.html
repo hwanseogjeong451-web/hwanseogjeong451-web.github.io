@@ -73,13 +73,13 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .combo-pill b{color:var(--gold)}
 .icon-btn{background:var(--surface);border:2px solid var(--line);border-radius:999px;width:40px;height:40px;font-size:18px;display:grid;place-items:center}
 
-/* ---------- Stage (the hero) ---------- */
+/* ---------- Stage ---------- */
 .stage{
   position:relative;background:var(--stage);color:var(--stage-ink);
   border-radius:28px;padding:34px 20px 26px;text-align:center;overflow:hidden;
   box-shadow:0 10px 0 #17104a, 0 18px 40px rgba(20,10,70,.35);
 }
-.stage::before{ /* marquee bulbs */
+.stage::before{
   content:"";position:absolute;inset:9px;border-radius:22px;pointer-events:none;
   background:
     radial-gradient(circle,var(--bulb) 0 3px,transparent 4px) 0 0/22px 22px repeat-x,
@@ -88,7 +88,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 }
 .stage.flash::before{animation:bulbs .5s steps(2) 3}
 @keyframes bulbs{50%{opacity:.25}}
-.q-label{font-size:14px;opacity:.75;margin:0 0 6px}
+.q-label{font-size:14px;opacity:.8;margin:0 0 6px}
 .q-emoji{font-size:34px;line-height:1;margin-bottom:4px}
 .q-word{font-size:clamp(64px,17vw,112px);font-weight:900;line-height:1.1;letter-spacing:.06em;margin:0}
 .q-pinyin{font-size:20px;margin-top:6px;color:var(--bulb);font-weight:500;min-height:28px;letter-spacing:.03em}
@@ -96,8 +96,52 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .timer i{display:block;height:100%;width:100%;background:var(--bulb);border-radius:99px;transform-origin:left;transition:background .3s}
 .timer i.low{background:var(--pink)}
 
+/* ---------- Momo (guide character) ---------- */
+.guide{display:flex;align-items:center;gap:10px;margin:16px 0 14px}
+.momo-wrap{flex:0 0 auto;width:92px;height:100px;background:none;border:none;padding:0;position:relative}
+.momo-wrap.tappable::after{
+  content:"힌트";position:absolute;right:-2px;top:2px;background:var(--gold);color:#1c1640;
+  font-size:11px;font-weight:900;border-radius:99px;padding:2px 7px;
+}
+.momo-wrap.used::after{opacity:.35}
+.momo-col{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:3px}
+.momo-name{background:var(--stage);color:var(--bulb);font-weight:900;font-size:13px;border:none;border-radius:99px;padding:3px 11px;white-space:nowrap;line-height:1.3}
+.momo-name .zh{color:var(--stage-ink);font-size:12px;margin-left:3px}
+button.momo-name{box-shadow:0 3px 0 #17104a}
+button.momo-name:active{transform:translateY(2px);box-shadow:none}
+.momo{width:100%;height:100%;overflow:visible}
+.momo .m-body{animation:bob 2.4s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 100%}
+@keyframes bob{50%{transform:translateY(-3px)}}
+.momo .eyes-happy,.momo .eyes-sad,.momo .mouth-open,.momo .mouth-sad,.momo .sparkle{display:none}
+.momo.happy .eyes-open,.momo.sad .eyes-open{display:none}
+.momo.happy .eyes-happy{display:inline}
+.momo.happy .sparkle{display:inline;animation:twinkle .6s ease-in-out infinite alternate}
+.momo.sad .eyes-sad{display:inline}
+.momo.happy .mouth-closed,.momo.sad .mouth-closed{display:none}
+.momo.happy .mouth-open{display:inline}
+.momo.sad .mouth-sad{display:inline}
+.momo.talk:not(.sad) .mouth-closed{display:none}
+.momo.talk:not(.sad) .mouth-open{display:inline;animation:talk .22s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
+@keyframes talk{to{transform:scaleY(.35)}}
+.momo.happy{animation:jump .45s ease-out 2}
+@keyframes jump{40%{transform:translateY(-12px)}}
+.momo.happy .m-arm-r{animation:wave .3s ease-in-out 4 alternate;transform-box:fill-box;transform-origin:20% 90%}
+@keyframes wave{to{transform:rotate(-25deg)}}
+.momo.sad .m-head{transform:rotate(-7deg) translateY(2px);transform-box:fill-box;transform-origin:50% 90%;transition:transform .3s}
+@keyframes twinkle{to{opacity:.3}}
+.bubble{
+  position:relative;flex:1;background:var(--surface);border:2px solid var(--line);
+  border-radius:18px;padding:10px 14px;min-height:66px;text-align:left;
+}
+.bubble::before{
+  content:"";position:absolute;left:-10px;top:50%;margin-top:-9px;width:16px;height:16px;
+  background:var(--surface);border-left:2px solid var(--line);border-bottom:2px solid var(--line);
+  transform:rotate(45deg);
+}
+.b-ko{margin:0;font-weight:700;font-size:17px;line-height:1.45;min-height:1.45em}
+.b-zh{margin:3px 0 0;font-size:14px;color:var(--muted);line-height:1.45;min-height:1.45em}
+
 /* ---------- Choices ---------- */
-.prompt{text-align:center;color:var(--muted);margin:22px 0 12px;font-size:15px}
 .choices{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .choices.three{grid-template-columns:1fr 1fr 1fr}
 .card{
@@ -115,38 +159,42 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 @keyframes pop{40%{transform:scale(1.08)}}
 @keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 
-/* ---------- Reveal panel ---------- */
-.reveal{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(700px,100%);z-index:25;background:var(--surface);border:2px solid var(--line);border-bottom:none;border-radius:28px 28px 0 0;padding:20px 20px calc(22px + env(safe-area-inset-bottom,0px));text-align:center;box-shadow:0 -14px 40px rgba(20,10,70,.3);animation:sheet .35s ease-out}
+/* ---------- Reveal sheet ---------- */
+.reveal{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(700px,100%);z-index:25;max-height:88vh;overflow-y:auto;background:var(--surface);border:2px solid var(--line);border-bottom:none;border-radius:28px 28px 0 0;padding:14px 20px calc(22px + env(safe-area-inset-bottom,0px));text-align:center;box-shadow:0 -14px 40px rgba(20,10,70,.3);animation:sheet .35s ease-out}
 @keyframes sheet{from{transform:translate(-50%,100%)}}
-.verdict{font-size:22px;margin:0 0 4px}
-.verdict.ok{color:var(--good)} .verdict.no{color:var(--bad)}
-.verdict-sub{color:var(--muted);font-size:14px;margin:0 0 14px}
+.reveal .guide{margin:0 0 12px}
+.reveal .bubble{background:var(--bg)}
+.reveal .bubble::before{background:var(--bg)}
 .syllables{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 .syl{border:2px solid var(--line);border-radius:16px;padding:10px 14px;min-width:78px}
 .syl .h{font-size:30px;font-weight:900}
 .syl .p{font-size:13px;color:var(--muted)}
 .syl .arrow{font-size:14px;color:var(--muted);line-height:1}
 .syl .k{font-size:32px;font-weight:900;color:var(--pink)}
-.note{font-size:14px;color:var(--muted);margin:8px 0 0}
+.note,.related{font-size:15px;color:var(--muted);margin:8px 0 0;line-height:1.5}
+.related b{color:var(--ink)}
+.related .zh{font-size:13px}
 .row{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
 .btn{border:none;border-radius:16px;padding:14px 26px;font-weight:900;font-size:18px;background:var(--pink);color:#fff;box-shadow:0 5px 0 #9e1f4a;transition:transform .1s}
 .btn:active{transform:translateY(4px);box-shadow:0 1px 0 #9e1f4a}
 .btn.ghost{background:var(--surface);color:var(--ink);border:2px solid var(--line);box-shadow:var(--shadow)}
 .btn small{display:block;font-size:12px;font-weight:500;opacity:.85}
 
-/* ---------- Floating points ---------- */
 .float{position:fixed;pointer-events:none;font-weight:900;font-size:30px;color:var(--gold);text-shadow:0 2px 0 rgba(0,0,0,.25);animation:floatUp 1.1s ease-out forwards;z-index:30}
 @keyframes floatUp{to{transform:translateY(-80px);opacity:0}}
 
-/* ---------- Start & end screens ---------- */
+/* ---------- Start & end ---------- */
 .title-stage{padding:44px 20px 34px}
 .title{font-size:clamp(46px,12vw,76px);line-height:1.05;margin:6px 0 2px;color:var(--stage-ink)}
 .title-zh{font-size:22px;color:var(--bulb);margin:0 0 18px;letter-spacing:.2em}
 .demo{display:inline-flex;align-items:center;gap:12px;background:rgba(255,255,255,.1);border-radius:16px;padding:10px 18px;font-size:26px;font-weight:900}
 .demo .eq{color:var(--bulb);font-size:20px}
-.howto{background:var(--surface);border:2px solid var(--line);border-radius:22px;padding:18px 20px;margin:20px 0}
-.howto p{margin:6px 0;line-height:1.6}
-.howto .zhline{color:var(--muted);font-size:14px}
+.section-label{font-size:14px;font-weight:700;color:var(--muted);margin:18px 0 8px;text-align:center}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:16px}
+.chip{border:2px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-weight:700;font-size:15px}
+.chip small{font-weight:500;color:var(--muted);margin-left:4px}
+.chip[aria-pressed="true"]{background:var(--pink);color:#fff;border-color:var(--pink)}
+.chip[aria-pressed="true"] small{color:#fff;opacity:.85}
 .modes{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .mode{background:var(--surface);border:3px solid var(--line);border-radius:22px;padding:18px 14px;text-align:left;box-shadow:var(--shadow)}
 .mode h3{margin:0 0 4px;font-size:22px}
@@ -175,7 +223,10 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
   .choices.three{grid-template-columns:1fr}
   .modes{grid-template-columns:1fr}
   .card{padding:18px 8px}
+  .momo-wrap{width:76px;height:84px}
+  .b-ko{font-size:16px}
 }
+
 /* ---------- iPad ---------- */
 @media (min-width:768px){
   .wrap{max-width:860px;padding:24px 28px 48px}
@@ -186,30 +237,32 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
   .score-pill{font-size:24px}
   .icon-btn{width:48px;height:48px;font-size:22px}
   .btn{font-size:21px;padding:16px 34px;border-radius:18px}
-  .prompt{font-size:17px}
   .syl{min-width:96px;padding:12px 18px}
   .syl .h{font-size:38px}
   .syl .k{font-size:40px}
-  .verdict{font-size:28px}
-  .reveal{padding:24px 28px calc(28px + env(safe-area-inset-bottom,0px))}
+  .reveal{padding:18px 28px calc(28px + env(safe-area-inset-bottom,0px))}
   .mode{padding:24px 22px}
   .mode h3{font-size:26px}
   .mode p{font-size:16px}
-  .howto p{font-size:18px}
+  .momo-wrap{width:112px;height:122px}
+  .b-ko{font-size:20px}
+  .b-zh{font-size:16px}
+  .chip{font-size:17px;padding:10px 18px}
+  .note,.related{font-size:17px}
 }
 @media (min-width:960px) and (orientation:landscape){
   .wrap{max-width:1160px}
-  #game:not(.hidden){display:grid;grid-template-columns:1.05fr 1fr;grid-template-areas:"top top" "stage prompt" "stage choices";grid-template-rows:auto auto 1fr;column-gap:32px}
+  #game:not(.hidden){display:grid;grid-template-columns:1.05fr 1fr;grid-template-areas:"top top" "stage guide" "stage choices";grid-template-rows:auto auto 1fr;column-gap:32px}
   #game .topbar{grid-area:top}
   #stage{grid-area:stage;display:flex;flex-direction:column;justify-content:center;min-height:min(520px,calc(100dvh - 150px))}
   #stage .q-word{font-size:clamp(110px,11vw,150px)}
-  #game .prompt{grid-area:prompt;margin:6px 0 14px;text-align:left}
+  #game > .guide{grid-area:guide;margin-top:0}
   #choices{grid-area:choices;align-content:start}
   .choices.three{grid-template-columns:1fr}
   .choices.three .card{padding:24px 10px}
-  #start:not(.hidden){display:grid;grid-template-columns:1.1fr 1fr;gap:28px;align-items:center}
-  #start .stage{grid-row:span 2}
-  #start .howto{margin:0}
+  #start:not(.hidden){display:grid;grid-template-columns:1.1fr 1fr;column-gap:28px;align-items:center}
+  #start .stage{grid-row:span 4}
+  #start > .guide{margin-top:0}
 }
 @media (prefers-reduced-motion:reduce){
   *{animation-duration:.01ms !important;transition:none !important}
@@ -221,7 +274,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 
 <div class="wrap">
 
-  <!-- ===== Start screen ===== -->
+  <!-- ===== Start ===== -->
   <section id="start">
     <div class="stage title-stage">
       <p class="q-label">한국어 × 中文</p>
@@ -229,12 +282,11 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
       <p class="title-zh zh">汉字词问答秀</p>
       <div class="demo"><span class="zh">学校</span><span class="eq">xuéxiào ≈</span><span>학교</span></div>
     </div>
-
-    <div class="howto">
-      <p>중국어 단어를 보고, 소리가 비슷한 <b>한글 단어</b>를 골라요. 빨리 맞힐수록, 연속으로 맞힐수록 점수가 커져요!</p>
-      <p class="zhline zh">看中文词语，选出发音相似的韩文单词。答得越快、连对越多，分数越高！</p>
+    <div class="guide-slot" data-slot="start"></div>
+    <div>
+      <p class="section-label">주제 고르기 · <span class="zh">选择主题</span></p>
+      <div class="chips" id="chips"></div>
     </div>
-
     <div class="modes">
       <button class="mode" data-mode="easy">
         <h3>연습 무대 <span class="zh" style="font-size:16px;color:var(--muted)">练习</span></h3>
@@ -249,7 +301,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
     </div>
   </section>
 
-  <!-- ===== Game screen ===== -->
+  <!-- ===== Game ===== -->
   <section id="game" class="hidden">
     <div class="topbar">
       <button class="icon-btn" id="home" aria-label="처음으로">🏠</button>
@@ -258,24 +310,21 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
       <div class="pill score-pill">⭐ <b id="score">0</b></div>
       <button class="icon-btn" id="snd" aria-label="소리 켜고 끄기">🔊</button>
     </div>
-
     <div class="stage" id="stage">
-      <p class="q-label">이 단어는 한국어로? · <span class="zh">这个词用韩语怎么说？</span></p>
+      <p class="q-label" id="qcat"></p>
       <div class="q-emoji" id="qemoji"></div>
       <p class="q-word zh" id="qword"></p>
       <div class="q-pinyin" id="qpinyin"></div>
       <div class="timer"><i id="timerbar"></i></div>
     </div>
-
-    <p class="prompt">소리가 비슷한 한글 카드를 골라요 · <span class="zh">选出发音相似的卡片</span></p>
+    <div class="guide-slot" data-slot="game"></div>
     <div class="choices" id="choices"></div>
-
     <div id="reveal" class="reveal hidden"></div>
   </section>
 
-  <!-- ===== End screen ===== -->
+  <!-- ===== End ===== -->
   <section id="end" class="hidden">
-    <div class="stage title-stage" id="endstage">
+    <div class="stage title-stage">
       <div id="newbest"></div>
       <div class="stars" id="stars"></div>
       <h2 class="rank display" id="rank"></h2>
@@ -283,54 +332,215 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
       <div class="final" id="final">0</div>
       <div class="stats" id="stats"></div>
     </div>
+    <div class="guide-slot" data-slot="end"></div>
     <div class="row">
       <button class="btn" id="again">한 번 더!<small class="zh">再来一次</small></button>
-      <button class="btn ghost" id="tohome">무대 고르기<small class="zh">选择模式</small></button>
+      <button class="btn ghost" id="tohome">처음으로<small class="zh">返回首页</small></button>
     </div>
     <div class="review" id="review"></div>
   </section>
-
 </div>
 
 <script>
-/* ---------- Word bank: 중국어 | 병음(글자별) | 한글 | 이모지 | 메모 ---------- */
-const RAW = [
-  "学校|xué xiào|학교|🏫","图书馆|tú shū guǎn|도서관|📚","家族|jiā zú|가족|👨‍👩‍👧",
-  "准备|zhǔn bèi|준비|🎒","运动|yùn dòng|운동|⚽","文化|wén huà|문화|🎎",
-  "音乐|yīn yuè|음악|🎵","电话|diàn huà|전화|📞","地图|dì tú|지도|🗺️",
-  "问题|wèn tí|문제|❓","时间|shí jiān|시간|⏰","世界|shì jiè|세계|🌍",
-  "学生|xué shēng|학생|🧑‍🎓","大学|dà xué|대학|🎓","动物|dòng wù|동물|🐼",
-  "饮食|yǐn shí|음식|🍜","安全|ān quán|안전|🦺","感谢|gǎn xiè|감사|🙏",
-  "自由|zì yóu|자유|🕊️","市场|shì chǎng|시장|🛒","历史|lì shǐ|역사|🏯",
-  "科学|kē xué|과학|🔬","数学|shù xué|수학|➗","天才|tiān cái|천재|💡",
-  "空气|kōng qì|공기|🌬️","有名|yǒu míng|유명|⭐","中国|zhōng guó|중국|🐉",
-  "韩国|hán guó|한국|🏔️","生日|shēng rì|생일|🎂","家具|jiā jù|가구|🛋️",
-  "秘密|mì mì|비밀|🤫","宇宙|yǔ zhòu|우주|🚀","地球|dì qiú|지구|🌏",
-  "太阳|tài yáng|태양|☀️","公园|gōng yuán|공원|🌳","三角形|sān jiǎo xíng|삼각형|🔺",
-  "英雄|yīng xióng|영웅|🦸","温度|wēn dù|온도|🌡️","人口|rén kǒu|인구|👥",
-  "注意|zhù yì|주의|⚠️","道路|dào lù|도로|🛣️",
-  "新闻|xīn wén|신문|📰|한국어 ‘신문’은 报纸(신문지)라는 뜻이에요 · 韩语里“신문”是“报纸”的意思"
-];
-const WORDS = RAW.map(s => { const [zh,py,ko,emoji,note] = s.split("|"); return {zh,py:py.split(" "),ko,emoji,note}; });
+/* ================= 단어장: 중국어 | 병음(글자별) | 한글 | 이모지 | 메모 ================= */
+const BANK = {
+school: [
+  "学校|xué xiào|학교|🏫","图书馆|tú shū guǎn|도서관|📚","准备|zhǔn bèi|준비|🎒","文化|wén huà|문화|🎎",
+  "音乐|yīn yuè|음악|🎵","问题|wèn tí|문제|❓","学生|xué shēng|학생|🧑‍🎓","大学|dà xué|대학|🎓",
+  "历史|lì shǐ|역사|🏯","科学|kē xué|과학|🔬","数学|shù xué|수학|➗","天才|tiān cái|천재|💡",
+  "教室|jiào shì|교실|🪑","教育|jiào yù|교육|📖","复习|fù xí|복습|🔁","预习|yù xí|예습|📝",
+  "练习|liàn xí|연습|🏋️","文字|wén zì|문자|🔤","汉字|hàn zì|한자|🀄","地理|dì lǐ|지리|🧭",
+  "美术|měi shù|미술|🎨","体育|tǐ yù|체육|🤸","成绩|chéng jì|성적|📊","校长|xiào zhǎng|교장|👩‍🏫",
+  "学习|xué xí|학습|✏️","知识|zhī shí|지식|🧠","问答|wèn dá|문답|💬","答案|dá àn|답안|✅",
+  "意见|yì jiàn|의견|🗣️","说明|shuō míng|설명|📋","发表|fā biǎo|발표|🎤","记录|jì lù|기록|📒",
+  "笔记|bǐ jì|필기|✍️","计算|jì suàn|계산|🧮","三角形|sān jiǎo xíng|삼각형|🔺","圆形|yuán xíng|원형|⭕"
+],
+nature: [
+  "动物|dòng wù|동물|🐼","宇宙|yǔ zhòu|우주|🚀","地球|dì qiú|지구|🌏","太阳|tài yáng|태양|☀️",
+  "公园|gōng yuán|공원|🌳","空气|kōng qì|공기|🌬️","温度|wēn dù|온도|🌡️","自然|zì rán|자연|🌿",
+  "海洋|hǎi yáng|해양|🌊","山脉|shān mài|산맥|⛰️","火山|huǒ shān|화산|🌋","森林|sēn lín|삼림|🌲|‘삼림’보다 쉬운 말은 ‘숲’이야 · 更常用的说法是“숲”",
+  "植物|zhí wù|식물|🌱","恐龙|kǒng lóng|공룡|🦖","昆虫|kūn chóng|곤충|🐞","动物园|dòng wù yuán|동물원|🦁",
+  "行星|xíng xīng|행성|🪐","地震|dì zhèn|지진|🫨","台风|tái fēng|태풍|🌀","南极|nán jí|남극|🐧",
+  "北极|běi jí|북극|🐻‍❄️","季节|jì jié|계절|🍂","春夏秋冬|chūn xià qiū dōng|춘하추동|🌸"
+],
+life: [
+  "家族|jiā zú|가족|👨‍👩‍👧","运动|yùn dòng|운동|⚽","电话|diàn huà|전화|📞","地图|dì tú|지도|🗺️",
+  "时间|shí jiān|시간|⏰","世界|shì jiè|세계|🌍","饮食|yǐn shí|음식|🍜","安全|ān quán|안전|🦺",
+  "市场|shì chǎng|시장|🛒","中国|zhōng guó|중국|🐉","韩国|hán guó|한국|🏔️","生日|shēng rì|생일|🎂",
+  "家具|jiā jù|가구|🛋️","道路|dào lù|도로|🛣️","人口|rén kǒu|인구|👥","注意|zhù yì|주의|⚠️",
+  "新闻|xīn wén|신문|📰|한국어 ‘신문’은 报纸라는 뜻이야 · 韩语“신문”是“报纸”的意思",
+  "身体|shēn tǐ|신체|🧍","健康|jiàn kāng|건강|💪","心脏|xīn zàng|심장|❤️","头脑|tóu nǎo|두뇌|🧠",
+  "食堂|shí táng|식당|🍱|한국어 ‘식당’은 餐厅이라는 뜻이야 · 韩语“식당”是“餐厅”的意思",
+  "料理|liào lǐ|요리|🍳","冷面|lěng miàn|냉면|🍜","饮料|yǐn liào|음료|🥤",
+  "砂糖|shā táng|사탕|🍬|한국어 ‘사탕’은 糖果라는 뜻이야 · 韩语“사탕”是“糖果”的意思",
+  "银行|yín háng|은행|🏦","警察|jǐng chá|경찰|👮","消防|xiāo fáng|소방|🚒",
+  "地下铁|dì xià tiě|지하철|🚇|중국에선 보통 地铁라고 해 · 中文常说“地铁”",
+  "汽车|qì chē|기차|🚂|한국어 ‘기차’는 火车야! 汽车는 ‘자동차’ · 韩语“기차”是火车，汽车叫“자동차”",
+  "电气|diàn qì|전기|⚡","信号|xìn hào|신호|🚦","交通|jiāo tōng|교통|🚌","旅行|lǚ xíng|여행|🧳",
+  "国家|guó jiā|국가|🏳️","地方|dì fāng|지방|🏘️","都市|dū shì|도시|🏙️",
+  "住所|zhù suǒ|주소|🏠|한국어 ‘주소’는 地址라는 뜻이야 · 韩语“주소”是“地址”的意思",
+  "家庭|jiā tíng|가정|🏡","父母|fù mǔ|부모|👨‍👩","兄弟|xiōng dì|형제|👦","姐妹|jiě mèi|자매|👭",
+  "新年|xīn nián|신년|🧧","生活|shēng huó|생활|🧺","电子|diàn zǐ|전자|🔌"
+],
+heart: [
+  "感谢|gǎn xiè|감사|🙏","自由|zì yóu|자유|🕊️","有名|yǒu míng|유명|⭐","秘密|mì mì|비밀|🤫",
+  "英雄|yīng xióng|영웅|🦸","人气|rén qì|인기|🌟","最高|zuì gāo|최고|🏆","完成|wán chéng|완성|🧩",
+  "成功|chéng gōng|성공|🎉","失败|shī bài|실패|😵","努力|nǔ lì|노력|💦","希望|xī wàng|희망|🌈",
+  "幸福|xìng fú|행복|😊","友情|yǒu qíng|우정|🤝","勇气|yǒng qì|용기|🦁","亲切|qīn qiè|친절|😇",
+  "正直|zhèng zhí|정직|🙆","安心|ān xīn|안심|😌","表情|biǎo qíng|표정|😄","感动|gǎn dòng|감동|🥹",
+  "趣味|qù wèi|취미|🎯|한국어 ‘취미’는 爱好라는 뜻이야 · 韩语“취미”是“爱好”的意思",
+  "漫画|màn huà|만화|📚","童话|tóng huà|동화|🧚","魔法|mó fǎ|마법|🪄","怪物|guài wù|괴물|👾",
+  "宝物|bǎo wù|보물|💎","王子|wáng zǐ|왕자|🤴","公主|gōng zhǔ|공주|👸","女王|nǚ wáng|여왕|👑",
+  "冒险|mào xiǎn|모험|🗺️","探险|tàn xiǎn|탐험|🔦","歌手|gē shǒu|가수|🎤","乐器|yuè qì|악기|🎻",
+  "万岁|wàn suì|만세|🙌","世纪|shì jì|세기|⏳","未来|wèi lái|미래|🔮","过去|guò qù|과거|🕰️",
+  "现在|xiàn zài|현재|⌚","时代|shí dài|시대|📜","中心|zhōng xīn|중심|🎯","人生|rén shēng|인생|🌱",
+  "人物|rén wù|인물|🧑"
+]
+};
+/* ================= 단어장 끝 ================= */
+
+const THEMES = {
+  all:["전체","全部","✨"], school:["학교·공부","学校","📚"], nature:["자연·우주","自然","🌏"],
+  life:["생활·음식","生活","🏙️"], heart:["마음·이야기","心情·故事","💖"]
+};
+const WORDS = [];
+for (const [cat, arr] of Object.entries(BANK)) for (const s of arr) {
+  const [zh,py,ko,emoji,note] = s.split("|");
+  WORDS.push({zh, py:py.split(" "), ko, emoji, note, cat});
+}
 
 const ROUND = 10;
 const MODES = { easy:{choices:3,time:20,pinyin:true}, hard:{choices:4,time:12,pinyin:false} };
-
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const $ = id => document.getElementById(id);
 const shuffle = a => { a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const pick = a => a[Math.random()*a.length|0];
 
 let S = {};
+let theme = "all";
 let soundOn = true;
 let revealT;
 
-/* ---------- Storage (best scores) ---------- */
+/* ================= 판다 모모 ================= */
+/* 캐릭터 이름: 기본은 모모(墨墨). 아이가 시작 화면에서 이름표를 눌러 새 이름을 지을 수 있어요 */
+let CHAR = (() => {
+  try { const n = localStorage.getItem("hq-name"); if (n) return {ko:n, zh:n, custom:true}; } catch(e){}
+  return {ko:"모모", zh:"墨墨", custom:false};
+})();
+const MOMO = `
+<svg class="momo" viewBox="0 0 120 130" aria-hidden="true">
+ <g class="m-body">
+  <ellipse cx="60" cy="126" rx="27" ry="3.5" fill="rgba(0,0,0,.12)"/>
+  <ellipse cx="60" cy="104" rx="24" ry="20" fill="#fff" stroke="#3d3466" stroke-width="2.2"/>
+  <ellipse cx="60" cy="109" rx="14" ry="11" fill="#f5f1ff"/>
+  <ellipse cx="44" cy="120" rx="10" ry="7" fill="#2f2752"/>
+  <ellipse cx="76" cy="120" rx="10" ry="7" fill="#2f2752"/>
+  <ellipse cx="44" cy="121" rx="4" ry="3" fill="#ffb3c8"/>
+  <ellipse cx="76" cy="121" rx="4" ry="3" fill="#ffb3c8"/>
+  <circle cx="39.5" cy="117.5" r="1.4" fill="#ffb3c8"/><circle cx="44" cy="116.3" r="1.4" fill="#ffb3c8"/><circle cx="48.5" cy="117.5" r="1.4" fill="#ffb3c8"/>
+  <circle cx="71.5" cy="117.5" r="1.4" fill="#ffb3c8"/><circle cx="76" cy="116.3" r="1.4" fill="#ffb3c8"/><circle cx="80.5" cy="117.5" r="1.4" fill="#ffb3c8"/>
+  <ellipse cx="39" cy="101" rx="7" ry="10" fill="#2f2752" transform="rotate(25 39 101)"/>
+  <g class="m-arm-r">
+   <path d="M84 98 L95 80" stroke="#e0a96d" stroke-width="3.2" stroke-linecap="round"/>
+   <path d="M93.6 82.5 L96.6 77.6" stroke="#ff6b9a" stroke-width="3.6" stroke-linecap="round"/>
+   <path d="M96 78 Q97.5 70 102 66 Q102.5 74 97.5 79.5 Z" fill="#2f2752"/>
+   <ellipse cx="81" cy="99" rx="7" ry="10" fill="#2f2752" transform="rotate(-25 81 99)"/>
+  </g>
+  <path d="M42 86 Q60 97 78 86 L76 92.5 Q60 102 44 92.5 Z" fill="#ff7aa5"/>
+  <path d="M47 89.5 Q60 96 73 89.5" stroke="#ffc2d6" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  <circle cx="60" cy="96.5" r="3.4" fill="#ffd34d" stroke="#e8a200" stroke-width="1"/>
+  <g class="m-head">
+   <circle cx="28" cy="23" r="11.5" fill="#2f2752"/>
+   <circle cx="92" cy="23" r="11.5" fill="#2f2752"/>
+   <circle cx="28.5" cy="24" r="5.5" fill="#ff9fbf"/>
+   <circle cx="91.5" cy="24" r="5.5" fill="#ff9fbf"/>
+   <path d="M60 15 C88 15 103 32 103 52 C103 73 86 85 60 85 C34 85 17 73 17 52 C17 32 32 15 60 15 Z" fill="#fff" stroke="#3d3466" stroke-width="2.2"/>
+   <ellipse cx="60" cy="77" rx="28" ry="5.5" fill="#f1edfc"/>
+   <g transform="translate(-1 3)">
+    <path d="M97 15 Q86 4 87.5 16.5 Q91 22 97 15 Z" fill="#ff6b9a"/>
+    <path d="M97 15 Q108 4 106.5 16.5 Q103 22 97 15 Z" fill="#ff6b9a"/>
+    <path d="M90 11 Q91.5 9.5 93 11" stroke="#ffc2d6" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <path d="M101 11 Q102.5 9.5 104 11" stroke="#ffc2d6" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <circle cx="97" cy="15" r="3.2" fill="#ff4f86"/>
+   </g>
+   <ellipse cx="42" cy="52" rx="10.5" ry="12.5" fill="#2f2752" transform="rotate(32 42 52)"/>
+   <ellipse cx="78" cy="52" rx="10.5" ry="12.5" fill="#2f2752" transform="rotate(-32 78 52)"/>
+   <g class="eyes-open">
+    <circle cx="43" cy="51" r="7" fill="#fff"/><circle cx="43.6" cy="51.8" r="5.4" fill="#5a46a8"/><circle cx="43.8" cy="52.2" r="3" fill="#1b1438"/>
+    <circle cx="41.3" cy="49.3" r="2.3" fill="#fff"/><circle cx="46" cy="54.6" r="1.1" fill="#fff"/>
+    <circle cx="77" cy="51" r="7" fill="#fff"/><circle cx="76.4" cy="51.8" r="5.4" fill="#5a46a8"/><circle cx="76.2" cy="52.2" r="3" fill="#1b1438"/>
+    <circle cx="74.3" cy="49.3" r="2.3" fill="#fff"/><circle cx="79" cy="54.6" r="1.1" fill="#fff"/>
+   </g>
+   <g class="eyes-happy" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round">
+    <path d="M37 54 Q43 45 49 54"/><path d="M71 54 Q77 45 83 54"/>
+   </g>
+   <g class="eyes-sad">
+    <g fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"><path d="M37 50 Q43 56 49 50"/><path d="M71 50 Q77 56 83 50"/></g>
+    <path d="M84 57 Q87.5 62.5 84 66 Q80.5 62.5 84 57 Z" fill="#8fd3ff"/>
+   </g>
+   <ellipse cx="28" cy="65" rx="7" ry="4" fill="#ffb3c8"/>
+   <ellipse cx="92" cy="65" rx="7" ry="4" fill="#ffb3c8"/>
+   <circle cx="25.5" cy="64" r="1" fill="#fff"/><circle cx="89.5" cy="64" r="1" fill="#fff"/>
+   <path d="M56.5 60.5 Q60 58.5 63.5 60.5 Q61 64.5 60 64.5 Q59 64.5 56.5 60.5 Z" fill="#2f2752"/>
+   <path class="mouth-closed" d="M55 66.5 Q57.5 69.8 60 66.5 Q62.5 69.8 65 66.5" stroke="#3d3466" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+   <g class="mouth-open"><path d="M55.5 66.5 Q60 65.5 64.5 66.5 Q64 74 60 74 Q56 74 55.5 66.5 Z" fill="#3d3466"/><ellipse cx="60" cy="72" rx="2.8" ry="1.7" fill="#ff7a9c"/></g>
+   <path class="mouth-sad" d="M56 70 Q60 66.5 64 70" stroke="#3d3466" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </g>
+  <g class="sparkle">
+   <path d="M10 34 l3 7 l7 3 l-7 3 l-3 7 l-3 -7 l-7 -3 l7 -3 z" fill="#ffd34d"/>
+   <path d="M112 38 l2 5 l5 2 l-5 2 l-2 5 l-2 -5 l-5 -2 l5 -2 z" fill="#ff9fbf"/>
+   <path d="M14 12 c0 -3 4 -3 4 0 c0 -3 4 -3 4 0 c0 3 -4 5 -4 7 c0 -2 -4 -4 -4 -7 z" fill="#ff6b9a"/>
+  </g>
+ </g>
+</svg>`;
+
+function nameTag(slot){
+  const edit = slot === "start", tag = edit ? "button" : "div";
+  return `<${tag} class="momo-name"${edit ? ' data-rename aria-label="이름 바꾸기"' : ''}><span class="nm">${CHAR.ko}</span>${CHAR.custom ? '' : ` <span class="zh">${CHAR.zh}</span>`}${edit ? ' ✏️' : ''}</${tag}>`;
+}
+function guideHTML(slot, tappable){
+  return `<div class="guide" data-guide="${slot}">
+    <div class="momo-col"><${tappable?'button':'div'} class="momo-wrap${tappable?' tappable':''}" ${tappable?'aria-label="캐릭터 누르기"':''}>${MOMO}</${tappable?'button':'div'}>${nameTag(slot)}</div>
+    <div class="bubble" aria-live="polite"><p class="b-ko"></p><p class="b-zh zh"></p></div>
+  </div>`;
+}
+document.querySelectorAll(".guide-slot").forEach(el => {
+  const slot = el.dataset.slot;
+  el.outerHTML = guideHTML(slot, slot === "game" || slot === "start");
+});
+
+const sayTok = {};
+function say(slot, ko, zh, mood){
+  const box = document.querySelector(`[data-guide="${slot}"]`);
+  if (!box) return;
+  const momo = box.querySelector(".momo"), bko = box.querySelector(".b-ko"), bzh = box.querySelector(".b-zh");
+  const tok = (sayTok[slot] || 0) + 1; sayTok[slot] = tok;
+  momo.classList.remove("happy","sad","talk");
+  void momo.getBoundingClientRect();
+  if (mood) momo.classList.add(mood);
+  momo.classList.add("talk");
+  bko.textContent = ""; bzh.textContent = "";
+  const chars = [...ko]; let i = 0;
+  const step = () => {
+    if (sayTok[slot] !== tok) return;
+    i = reduceMotion ? chars.length : i + 1;
+    bko.textContent = chars.slice(0, i).join("");
+    if (i < chars.length) setTimeout(step, 30);
+    else { bzh.textContent = zh; setTimeout(() => { if (sayTok[slot] === tok) momo.classList.remove("talk"); }, 250); }
+  };
+  step();
+}
+
+/* ================= Storage ================= */
 function getBest(m){ try { return +localStorage.getItem("hq-best-"+m) || 0; } catch(e){ return 0; } }
 function setBest(m,v){ try { localStorage.setItem("hq-best-"+m, v); } catch(e){} }
+function getSeen(){ try { return JSON.parse(localStorage.getItem("hq-seen") || "{}"); } catch(e){ return {}; } }
+function markSeen(zh){ try { const s = getSeen(); s[zh] = (s[zh]||0) + 1; localStorage.setItem("hq-seen", JSON.stringify(s)); } catch(e){} }
 function showBests(){
   for (const m of ["easy","hard"]) { const b = getBest(m); $("best-"+m).textContent = b ? `최고 점수 ${b.toLocaleString()}` : ""; }
 }
 
-/* ---------- Sound ---------- */
+/* ================= Sound ================= */
 let actx;
 function tone(freq, start, dur, type="sine", vol=.09){
   if (!soundOn) return;
@@ -345,7 +555,7 @@ function tone(freq, start, dur, type="sine", vol=.09){
 }
 const sfxRight = () => { tone(660,0,.15,"triangle"); tone(880,.1,.15,"triangle"); tone(1320,.2,.3,"triangle"); };
 const sfxWrong = () => { tone(220,0,.25,"sawtooth",.04); tone(180,.15,.3,"sawtooth",.04); };
-/* iPad(iOS)는 첫 터치 때 소리를 ‘깨워야’ 이후에 효과음과 발음이 나와요 */
+const sfxHint  = () => { tone(990,0,.12,"sine",.06); tone(1180,.08,.18,"sine",.06); };
 function unlockAudio(){
   try{
     actx = actx || new (window.AudioContext||window.webkitAudioContext)();
@@ -368,7 +578,6 @@ function speak(text, lang="ko-KR"){
     speechSynthesis.speak(u);
   }catch(e){}
 }
-
 function koVoiceMissing(){
   if (!("speechSynthesis" in window)) return true;
   try{
@@ -377,16 +586,74 @@ function koVoiceMissing(){
   }catch(e){ return false; }
 }
 
-/* ---------- Screens ---------- */
-function show(id){ for (const s of ["start","game","end"]) $(s).classList.toggle("hidden", s!==id); window.scrollTo(0,0); }
+/* ================= Screens ================= */
+let startLoop;
+let START_LINES;
+function buildLines(){ START_LINES = [
+  [`안녕! 나는 판다 ‘${CHAR.ko}’야. 중국어를 알면 한국어가 쉬워져!`,`你好！我是熊猫“${CHAR.zh}”。会中文的话，学韩语很容易哦！`],
+  CHAR.custom
+    ? ["내 이름을 지어 줘서 고마워! 우리 같이 힘내자!","谢谢你给我起名字！我们一起加油！"]
+    : ["내 이름은 ‘먹 묵(墨)’ 자에서 왔어. 붓글씨를 제일 좋아하거든!","我叫“墨墨”，因为我最喜欢用毛笔写字！"],
+  ["내 이름표를 누르면 새 이름을 지어 줄 수 있어!","点我的名牌，就能给我起新名字！"],
+  ["중국어 단어를 보고, 소리가 비슷한 한글 카드를 골라 봐!","看中文词语，选出发音相似的韩文卡片吧！"],
+  ["빨리, 그리고 연속으로 맞히면 점수가 쑥쑥 올라가!","答得越快、连对越多，分数就越高！"],
+  ["모르겠으면 게임 중에 나를 눌러. 첫 글자 힌트를 줄게!","不会的时候点我，我告诉你第一个字！"],
+  [`단어가 ${WORDS.length}개나 있어. 주제를 골라 봐!`,`一共有${WORDS.length}个词，选个主题吧！`]
+]; }
+buildLines();
+
+function rename(){
+  let n = prompt("판다의 새 이름을 지어 줘! (비우면 ‘모모’로 돌아가요)\n给熊猫起个新名字吧！（留空就变回“墨墨”）", CHAR.custom ? CHAR.ko : "");
+  if (n === null) return;
+  n = n.replace(/[<>&"'`]/g, "").trim().slice(0, 8);
+  if (n) { CHAR = {ko:n, zh:n, custom:true}; try{ localStorage.setItem("hq-name", n); }catch(e){} }
+  else   { CHAR = {ko:"모모", zh:"墨墨", custom:false}; try{ localStorage.removeItem("hq-name"); }catch(e){} }
+  document.querySelectorAll(".momo-name").forEach(el => {
+    const slot = el.closest("[data-guide]").dataset.guide;
+    el.outerHTML = nameTag(slot);
+  });
+  buildLines();
+  clearInterval(startLoop);
+  if (n) say("start", `와! 이제 내 이름은 ‘${n}’야. 고마워!`, `哇！我现在叫“${n}”了，谢谢你！`, "happy");
+  else say("start", ...START_LINES[0], "happy");
+}
+document.addEventListener("click", e => { if (e.target.closest("[data-rename]")) rename(); });
+function show(id){
+  for (const s of ["start","game","end"]) $(s).classList.toggle("hidden", s!==id);
+  window.scrollTo(0,0);
+  clearInterval(startLoop);
+  if (id === "start") {
+    let i = 0; say("start", ...START_LINES[0]);
+    startLoop = setInterval(() => { i = (i+1) % START_LINES.length; say("start", ...START_LINES[i]); }, 5200);
+  }
+}
+
+function renderChips(){
+  $("chips").innerHTML = Object.entries(THEMES).map(([k,[ko,zh,em]]) => {
+    const n = k === "all" ? WORDS.length : WORDS.filter(w => w.cat === k).length;
+    return `<button class="chip" data-theme="${k}" aria-pressed="${k===theme}">${em} ${ko}<small class="zh">${zh} · ${n}</small></button>`;
+  }).join("");
+  $("chips").querySelectorAll(".chip").forEach(b => b.onclick = () => {
+    theme = b.dataset.theme; renderChips();
+    const [ko,zh] = THEMES[theme];
+    say("start", theme === "all" ? "좋아, 모든 주제에서 골고루 낼게!" : `좋아, ‘${ko}’ 단어로 낼게!`,
+                 theme === "all" ? "好，所有主题都会出题！" : `好，出“${zh}”的题！`, "happy");
+  });
+}
+
+function buildQueue(){
+  const pool = WORDS.filter(w => theme === "all" || w.cat === theme);
+  const seen = getSeen();
+  return shuffle(pool.map(w => ({w, k:(seen[w.zh]||0) + Math.random()*0.9}))
+    .sort((a,b) => a.k - b.k).slice(0, ROUND).map(o => o.w));
+}
 
 function startGame(mode){
-  S = { mode, cfg:MODES[mode], queue:shuffle(WORDS).slice(0,ROUND), idx:0, score:0, combo:0, maxCombo:0, correct:0, missed:[], locked:false };
-  $("score").textContent = "0"; $("combo").textContent = "0"; $("qtotal").textContent = ROUND;
+  S = { mode, cfg:MODES[mode], queue:buildQueue(), idx:0, score:0, combo:0, maxCombo:0, correct:0, missed:[], locked:false };
+  $("score").textContent = "0"; $("combo").textContent = "0"; $("qtotal").textContent = S.queue.length;
   show("game"); nextQuestion();
 }
 
-/* 함정 보기: 같은 글자를 공유하는 단어를 우선으로 골라 퍼즐처럼 만들어요 */
 function pickDistractors(w, n){
   const scored = WORDS.filter(x => x.ko !== w.ko).map(x => {
     let shared = 0; for (const ch of x.ko) if (w.ko.includes(ch)) shared++;
@@ -395,14 +662,29 @@ function pickDistractors(w, n){
   return scored.slice(0,n).map(o => o.x);
 }
 
+const PROMPTS = [
+  ["소리가 비슷한 한글 카드를 찾아봐!","找出发音相似的韩文卡片吧！"],
+  ["중국어로 소리 내어 읽어 보면 쉬워!","用中文读一读，就容易啦！"],
+  ["한자 한 글자가 한글 한 글자야!","一个汉字就是一个韩文字哦！"],
+  ["천천히 생각해도 괜찮아!","慢慢想也没关系！"],
+  ["이 단어, 알 것 같지?","这个词，你应该知道吧？"]
+];
+
 function nextQuestion(){
   const w = S.queue[S.idx];
-  S.current = w; S.locked = false;
+  S.current = w; S.locked = false; S.hintUsed = false;
+  clearTimeout(revealT); $("reveal").classList.add("hidden");
   $("qnum").textContent = S.idx+1;
+  const [cko, czh, cem] = THEMES[w.cat];
+  $("qcat").innerHTML = `${cem} ${cko} · <span class="zh">${czh}</span>`;
   $("qemoji").textContent = w.emoji;
   $("qword").textContent = w.zh;
   $("qpinyin").textContent = S.cfg.pinyin ? w.py.join(" ") : "";
-  clearTimeout(revealT); $("reveal").classList.add("hidden");
+  document.querySelector('[data-guide="game"] .momo-wrap').classList.remove("used");
+
+  if (S.idx === 0) say("game","모르면 나를 눌러! 첫 글자 힌트를 줄게","不会就点我！我告诉你第一个字");
+  else if (S.combo >= 3) say("game",`벌써 ${S.combo}연속이야! 이번 것도 맞혀 봐!`,`已经${S.combo}连胜了！这题也拿下吧！`,"happy");
+  else say("game", ...pick(PROMPTS));
 
   const opts = shuffle([w, ...pickDistractors(w, S.cfg.choices-1)]);
   const box = $("choices"); box.innerHTML = "";
@@ -417,7 +699,18 @@ function nextQuestion(){
   startTimer();
 }
 
-/* ---------- Timer ---------- */
+function hint(){
+  if (!S.current || S.locked) return;
+  const w = S.current;
+  if (S.hintUsed) { say("game","힌트는 한 문제에 한 번만이야!","每题只能用一次提示哦！"); return; }
+  S.hintUsed = true;
+  document.querySelector('[data-guide="game"] .momo-wrap').classList.add("used");
+  sfxHint();
+  say("game",`힌트! 첫 글자는 ‘${w.ko[0]}’야. (점수는 절반)`,`提示：第一个字是“${w.ko[0]}”！（得分减半）`,"happy");
+  speak(w.ko[0]);
+}
+
+/* ================= Timer ================= */
 function startTimer(from = 1){
   cancelAnimationFrame(S.raf);
   const bar = $("timerbar"), total = S.cfg.time*1000, t0 = performance.now();
@@ -432,62 +725,84 @@ function startTimer(from = 1){
   S.raf = requestAnimationFrame(tick);
 }
 
-/* ---------- Answer ---------- */
+/* ================= Answer ================= */
 function answer(choice, btn){
   if (S.locked) return;
   S.locked = true;
   cancelAnimationFrame(S.raf);
-  const w = S.current, ok = choice && choice.ko === w.ko;
-  const cards = [...document.querySelectorAll(".card")];
-  cards.forEach(c => { c.disabled = true; if (c.dataset.ko === w.ko) c.classList.add("correct"); else if (c !== btn) c.classList.add("dim"); });
+  const w = S.current, ok = !!choice && choice.ko === w.ko;
+  markSeen(w.zh);
+  document.querySelectorAll(".card").forEach(c => {
+    c.disabled = true;
+    if (c.dataset.ko === w.ko) c.classList.add("correct"); else if (c !== btn) c.classList.add("dim");
+  });
 
   if (ok) {
     S.combo++; S.correct++; S.maxCombo = Math.max(S.maxCombo, S.combo);
-    const speed = Math.round(S.remaining*50);
-    const comboBonus = Math.min(S.combo-1, 5)*20;
-    const gain = 100 + speed + comboBonus;
-    countUp(S.score, S.score+gain); S.score += gain;
+    let gain = 100 + Math.round(S.remaining*50) + Math.min(S.combo-1, 5)*20;
+    if (S.hintUsed) gain = Math.round(gain/2);
+    animateNumber($("score"), S.score, S.score+gain, 600); S.score += gain;
     const r = btn.getBoundingClientRect();
     floatText(`+${gain}`, r.left + r.width/2, r.top);
     celebrate(r.left + r.width/2, r.top + r.height/2, S.combo);
     $("stage").classList.remove("flash"); void $("stage").offsetWidth; $("stage").classList.add("flash");
     sfxRight();
+    say("game", pick(["좋았어!","정답!","대단해!","역시!"]), pick(["太棒了！","答对了！","真厉害！"]), "happy");
   } else {
     if (btn) btn.classList.add("wrong");
     S.combo = 0; S.missed.push(w);
     sfxWrong();
+    say("game", choice ? "앗, 아깝다!" : "앗, 시간이 다 됐어!", choice ? "哎呀，差一点！" : "哎呀，时间到了！", "sad");
   }
   $("combo").textContent = S.combo;
-  clearTimeout(revealT);
-  revealT = setTimeout(() => showReveal(w, ok, choice === null), 750);
   speak(w.ko);
+  clearTimeout(revealT);
+  revealT = setTimeout(() => showReveal(w, ok, choice), 750);
 }
 
-function showReveal(w, ok, timedOut){
-  const praise = ["정답! 好棒！","맞았어요! 答对了！","완벽해요! 太厉害了！","대단해요! 真聪明！"];
-  let head, sub;
+/* 같은 한자가 들어간 다른 단어 찾기 (읽는 소리가 같은 것만) */
+function related(w){
+  for (const i of shuffle([...w.zh].map((_,i) => i))) {
+    const c = w.zh[i], k = w.ko[i];
+    const list = shuffle(WORDS.filter(x => x !== w && x.zh.includes(c) && x.ko[x.zh.indexOf(c)] === k)).slice(0,3);
+    if (list.length) return { c, k, list };
+  }
+  return null;
+}
+
+function showReveal(w, ok, choice){
+  const rel = related(w);
+  let ko, zh, mood;
   if (ok) {
-    head = praise[Math.random()*praise.length|0];
-    sub = S.combo >= 3 ? `🔥 ${S.combo}연속 정답! 콤보 보너스 · ${S.combo}连胜！` : "한자 한 글자가 한글 한 글자가 돼요 · 一个汉字对应一个韩文字";
+    mood = "happy";
+    const pre = S.combo >= 3 ? [`${S.combo}연속 정답! `, `${S.combo}连胜！`] : ["정답! ", "答对了！"];
+    if (w.note)      { ko = pre[0] + "그런데 이건 함정 단어야. 뜻이 조금 달라!"; zh = pre[1] + "不过这是个“陷阱词”，意思不太一样！"; }
+    else if (rel)    { ko = pre[0] + `“${rel.c}”는 한국어로 ‘${rel.k}’야.`; zh = pre[1] + `“${rel.c}”在韩语里读“${rel.k}”。`; }
+    else             { ko = pre[0] + "한자 한 글자가 한글 한 글자가 됐지?"; zh = pre[1] + "一个汉字变成了一个韩文字！"; }
   } else {
-    head = timedOut ? "시간 끝! 时间到！" : "아깝다! 差一点！";
-    sub = "괜찮아요, 글자 짝을 보고 기억해요 · 没关系，看看对应关系吧";
+    mood = "sad";
+    let i = 0;
+    if (choice) { const j = [...w.ko].findIndex(ch => !choice.ko.includes(ch)); if (j >= 0) i = j; }
+    ko = (choice ? "괜찮아! " : "시간 끝! ") + `“${w.zh[i]}”는 ‘${w.ko[i]}’라고 읽어.`;
+    zh = (choice ? "没关系！" : "时间到！") + `“${w.zh[i]}”读作“${w.ko[i]}”。`;
   }
   const syl = [...w.zh].map((h,i) => `
     <div class="syl"><div class="h zh">${h}</div><div class="p">${w.py[i]}</div><div class="arrow">↓</div><div class="k">${w.ko[i]}</div></div>`).join("");
-  const last = S.idx === ROUND-1;
+  const relLine = rel ? `<p class="related">🔗 <b>${rel.c} = ${rel.k}</b> → ${rel.list.map(x => `${x.ko}<span class="zh">(${x.zh})</span>`).join(" · ")}</p>` : "";
+  const last = S.idx === S.queue.length-1;
   const el = $("reveal");
   el.innerHTML = `
-    <p class="verdict display ${ok?"ok":"no"}">${head}</p>
-    <p class="verdict-sub">${sub}</p>
+    ${guideHTML("reveal", false)}
     <div class="syllables">${syl}</div>
     ${w.note ? `<p class="note">💡 ${w.note}</p>` : ""}
+    ${relLine}
     ${koVoiceMissing() ? `<p class="note">🔈 이 기기에 한국어 음성이 없어서 발음이 안 나와요 · 设备上没有韩语语音</p>` : ""}
     <div class="row">
       <button class="btn ghost" id="say">🔊 듣기<small class="zh">听发音</small></button>
       <button class="btn" id="next">${last ? "결과 보기" : "다음 문제"}<small class="zh">${last ? "查看结果" : "下一题"}</small></button>
     </div>`;
   el.classList.remove("hidden");
+  say("reveal", ko, zh, mood);
   $("say").onclick = () => speak(w.ko);
   $("next").onclick = advance;
   $("next").focus({preventScroll:true});
@@ -495,22 +810,31 @@ function showReveal(w, ok, timedOut){
 
 function advance(){
   S.idx++;
-  if (S.idx >= ROUND) endGame(); else nextQuestion();
+  if (S.idx >= S.queue.length) endGame(); else nextQuestion();
 }
 
-/* ---------- End ---------- */
+/* ================= End ================= */
 function endGame(){
   show("end");
-  const c = S.correct, stars = c>=9 ? 3 : c>=6 ? 2 : c>=3 ? 1 : 0;
+  const n = S.queue.length, c = S.correct;
+  const stars = c >= n*.9 ? 3 : c >= n*.6 ? 2 : c >= n*.3 ? 1 : 0;
   $("stars").innerHTML = [0,1,2].map(i => `<span class="${i<stars?"":"off"}">★</span>`).join("");
   const ranks = [["다시 도전!","再接再厉！"],["한자어 새싹","汉字词新芽"],["한자어 탐험가","汉字词探险家"],["한자어 마스터","汉字词大师"]];
   $("rank").textContent = ranks[stars][0];
   $("rankzh").textContent = ranks[stars][1];
-  $("stats").innerHTML = `<span>맞힌 문제 ${c}/${ROUND}</span><span>최고 연속 ${S.maxCombo}</span>`;
+  $("stats").innerHTML = `<span>맞힌 문제 ${c}/${n}</span><span>최고 연속 ${S.maxCombo}</span>`;
   const prev = getBest(S.mode);
   $("newbest").innerHTML = S.score > prev ? `<span class="newbest">🏆 새 최고 기록! 新纪录！</span>` : "";
   if (S.score > prev) setBest(S.mode, S.score);
   animateNumber($("final"), 0, S.score, 1200);
+
+  const talk = [
+    ["괜찮아! 처음엔 다 어려워. 한 번 더 해 보자!","没关系！一开始都很难，再来一次吧！","sad"],
+    ["좋아! 아래 단어들을 한 번 더 보면 더 잘할 수 있어.","不错！复习一下下面的词，会更棒哦！",null],
+    ["아주 잘했어! 조금만 더 하면 마스터야!","做得很好！再努力一点就是大师了！","happy"],
+    ["완벽해! 넌 진짜 한자어 마스터야!","太完美了！你是真正的汉字词大师！","happy"]
+  ][stars];
+  say("end", talk[0], talk[1], talk[2]);
 
   const rv = $("review");
   if (S.missed.length) {
@@ -522,31 +846,28 @@ function endGame(){
   if (stars >= 2) finale(stars);
 }
 
-/* ---------- Score helpers ---------- */
+/* ================= Helpers ================= */
 function animateNumber(el, from, to, ms){
   const t0 = performance.now();
   const step = now => { const p = Math.min(1,(now-t0)/ms), e = 1-Math.pow(1-p,3);
     el.textContent = Math.round(from + (to-from)*e).toLocaleString(); if (p<1) requestAnimationFrame(step); };
   requestAnimationFrame(step);
 }
-function countUp(from,to){ animateNumber($("score"), from, to, 600); }
 function floatText(t,x,y){
   const d = document.createElement("div"); d.className = "float"; d.textContent = t;
   d.style.left = (x-40)+"px"; d.style.top = (y-20)+"px";
   document.body.appendChild(d); setTimeout(() => d.remove(), 1200);
 }
 
-/* ---------- Fireworks ---------- */
+/* ================= Fireworks ================= */
 const cv = $("fx"), cx = cv.getContext("2d");
 let parts = [], running = false;
 const COLORS = ["#ff4f8b","#ffd34d","#4fd1c5","#7c6cff","#ff8a3d","#ffffff","#62e36b"];
-const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 function resize(){ const dpr = window.devicePixelRatio||1; cv.width = innerWidth*dpr; cv.height = innerHeight*dpr; cx.setTransform(dpr,0,0,dpr,0,0); }
 addEventListener("resize", resize); resize();
-
 function burst(x, y, n=70, power=7){
   if (reduceMotion) n = Math.min(n, 20);
-  const base = COLORS[Math.random()*COLORS.length|0], alt = COLORS[Math.random()*COLORS.length|0];
+  const base = pick(COLORS), alt = pick(COLORS);
   for (let i=0;i<n;i++){
     const a = Math.PI*2*i/n + Math.random()*.2, sp = power*(.4+Math.random()*.7);
     parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:.012+Math.random()*.012,
@@ -578,31 +899,39 @@ function celebrate(x, y, combo){
 function finale(stars){
   const n = stars===3 ? 12 : 6;
   for (let i=0;i<n;i++)
-    setTimeout(() => { burst(innerWidth*(.1+Math.random()*.8), innerHeight*(.1+Math.random()*.45), 90, 7+Math.random()*3); tone(500+Math.random()*700,0,.2,"triangle",.06); }, i*280);
+    setTimeout(() => { burst(innerWidth*(.1+Math.random()*.8), innerHeight*(.1+Math.random()*.45), 90, 7+Math.random()*3); tone(500+Math.random()*700,0,.2,"triangle",.03); }, i*280);
 }
 
-/* ---------- Events ---------- */
+/* ================= Events ================= */
 document.querySelectorAll(".mode").forEach(b => b.addEventListener("click", () => { unlockAudio(); startGame(b.dataset.mode); }));
 $("again").onclick = () => { unlockAudio(); startGame(S.mode); };
+$("tohome").onclick = () => { showBests(); show("start"); };
+$("home").onclick = () => { cancelAnimationFrame(S.raf); clearTimeout(revealT); $("reveal").classList.add("hidden"); showBests(); show("start"); };
+document.querySelector('[data-guide="game"] .momo-wrap').addEventListener("click", hint);
+document.querySelector('[data-guide="start"] .momo-wrap').addEventListener("click", () => {
+  clearInterval(startLoop);
+  say("start", ...pick(START_LINES.slice(1)), "happy");
+});
 $("snd").onclick = () => {
   soundOn = !soundOn; $("snd").textContent = soundOn ? "🔊" : "🔇";
   if (soundOn) unlockAudio(); else { try{ speechSynthesis.cancel(); }catch(e){} }
 };
-/* 다른 앱으로 갔다 오면 타이머가 멈췄다가 이어서 흘러가요 */
 document.addEventListener("visibilitychange", () => {
   if ($("game").classList.contains("hidden") || S.locked) return;
   if (document.hidden) cancelAnimationFrame(S.raf); else startTimer(S.remaining);
 });
-try{ speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices(); }catch(e){}
-$("tohome").onclick = () => { showBests(); show("start"); };
-$("home").onclick = () => { cancelAnimationFrame(S.raf); clearTimeout(revealT); $("reveal").classList.add("hidden"); showBests(); show("start"); };
 document.addEventListener("keydown", e => {
   if ($("game").classList.contains("hidden")) return;
   const n = parseInt(e.key,10);
   if (!S.locked && n>=1 && n<=S.cfg.choices){ document.querySelectorAll(".card")[n-1]?.click(); }
-  else if (S.locked && (e.key==="Enter" || e.key===" ") && document.activeElement?.id!=="next" && document.activeElement?.id!=="say"){ e.preventDefault(); advance(); }
+  else if (!S.locked && (e.key==="h" || e.key==="H")) hint();
+  else if (S.locked && !$("reveal").classList.contains("hidden") && (e.key==="Enter" || e.key===" ") && document.activeElement?.id!=="next" && document.activeElement?.id!=="say"){ e.preventDefault(); advance(); }
 });
+try{ speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices(); }catch(e){}
+
+renderChips();
 showBests();
+show("start");
 </script>
 </body>
 </html>
