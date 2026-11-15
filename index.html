@@ -99,7 +99,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 /* ---------- Momo (guide character) ---------- */
 .guide{display:flex;align-items:center;gap:10px;margin:16px 0 14px}
 .momo-wrap{flex:0 0 auto;width:92px;height:100px;background:none;border:none;padding:0;position:relative}
-.momo-wrap.tappable::after{
+[data-guide="game"] .momo-wrap.tappable::after{
   content:"힌트";position:absolute;right:-2px;top:2px;background:var(--gold);color:#1c1640;
   font-size:11px;font-weight:900;border-radius:99px;padding:2px 7px;
 }
@@ -140,6 +140,20 @@ button.momo-name:active{transform:translateY(2px);box-shadow:none}
 }
 .b-ko{margin:0;font-weight:700;font-size:17px;line-height:1.45;min-height:1.45em}
 .b-zh{margin:3px 0 0;font-size:14px;color:var(--muted);line-height:1.45;min-height:1.45em}
+.bubble.pop{animation:bubblePop .4s cubic-bezier(.3,1.6,.5,1)}
+@keyframes bubblePop{from{transform:scale(.93);opacity:.5}}
+.b-zh.show{animation:fadeUp .45s ease-out}
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px)}}
+.momo-wrap{cursor:pointer}
+.momo{transform-origin:50% 95%}
+.momo.tap-squish{animation:squish .55s cubic-bezier(.3,1.6,.5,1)}
+@keyframes squish{0%{transform:scale(1)}25%{transform:scale(1.18,.8)}50%{transform:scale(.9,1.12) translateY(-12px)}75%{transform:scale(1.05,.95)}100%{transform:scale(1)}}
+.momo.tap-spin{animation:spinhop .75s ease-in-out}
+@keyframes spinhop{40%{transform:translateY(-20px) rotate(180deg)}80%{transform:translateY(0) rotate(350deg)}100%{transform:rotate(360deg)}}
+.momo.tap-wiggle{animation:wiggle .6s ease-in-out}
+@keyframes wiggle{20%{transform:rotate(-12deg)}40%{transform:rotate(10deg)}60%{transform:rotate(-6deg)}80%{transform:rotate(4deg)}}
+.pop-fx{position:fixed;pointer-events:none;z-index:31;font-size:22px;animation:popfx .9s ease-out both}
+@keyframes popfx{0%{transform:translate(-50%,-50%) scale(.3);opacity:1}70%{opacity:1}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.15);opacity:0}}
 
 /* ---------- Choices ---------- */
 .choices{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -415,6 +429,11 @@ const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").match
 const $ = id => document.getElementById(id);
 const shuffle = a => { a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [a[i],a[j]]=[a[j],a[i]]; } return a; };
 const pick = a => a[Math.random()*a.length|0];
+/* 받침에 맞춘 자연스러운 조사 */
+const hasBatchim = s => { const c = s.charCodeAt(s.length-1); return c >= 0xAC00 && c <= 0xD7A3 && (c-0xAC00)%28 !== 0; };
+const ya  = s => hasBatchim(s) ? "이야" : "야";
+const eun = s => hasBatchim(s) ? "은" : "는";
+const ira = s => hasBatchim(s) ? "이라" : "라";
 
 let S = {};
 let theme = "all";
@@ -510,23 +529,37 @@ document.querySelectorAll(".guide-slot").forEach(el => {
 });
 
 const sayTok = {};
-function say(slot, ko, zh, mood){
+/* 말풀선이 나올 때 나는 작고 부드러운 목소리(또로롱) */
+function blip(){
+  if (!soundOn || !actx || actx.state !== "running") return;
+  try{ if (window.speechSynthesis && speechSynthesis.speaking) return; }catch(e){}
+  tone(560 + Math.random()*220, 0, .06, "sine", .022);
+}
+function say(slot, ko, zh, mood, quiet){
   const box = document.querySelector(`[data-guide="${slot}"]`);
   if (!box) return;
-  const momo = box.querySelector(".momo"), bko = box.querySelector(".b-ko"), bzh = box.querySelector(".b-zh");
+  const momo = box.querySelector(".momo"), bub = box.querySelector(".bubble"),
+        bko = box.querySelector(".b-ko"), bzh = box.querySelector(".b-zh");
   const tok = (sayTok[slot] || 0) + 1; sayTok[slot] = tok;
   momo.classList.remove("happy","sad","talk");
+  bub.classList.remove("pop"); bzh.classList.remove("show");
   void momo.getBoundingClientRect();
   if (mood) momo.classList.add(mood);
-  momo.classList.add("talk");
+  momo.classList.add("talk"); bub.classList.add("pop");
   bko.textContent = ""; bzh.textContent = "";
   const chars = [...ko]; let i = 0;
   const step = () => {
     if (sayTok[slot] !== tok) return;
     i = reduceMotion ? chars.length : i + 1;
     bko.textContent = chars.slice(0, i).join("");
-    if (i < chars.length) setTimeout(step, 30);
-    else { bzh.textContent = zh; setTimeout(() => { if (sayTok[slot] === tok) momo.classList.remove("talk"); }, 250); }
+    const ch = chars[i-1] || "";
+    if (!quiet && i % 2 === 1 && /[가-힣]/.test(ch)) blip();
+    if (i < chars.length) setTimeout(step, /[.!?,]/.test(ch) ? 170 : 45);
+    else setTimeout(() => {
+      if (sayTok[slot] !== tok) return;
+      bzh.textContent = zh; bzh.classList.add("show");
+      momo.classList.remove("talk");
+    }, 200);
   };
   step();
 }
@@ -556,6 +589,33 @@ function tone(freq, start, dur, type="sine", vol=.09){
 const sfxRight = () => { tone(660,0,.15,"triangle"); tone(880,.1,.15,"triangle"); tone(1320,.2,.3,"triangle"); };
 const sfxWrong = () => { tone(220,0,.25,"sawtooth",.04); tone(180,.15,.3,"sawtooth",.04); };
 const sfxHint  = () => { tone(990,0,.12,"sine",.06); tone(1180,.08,.18,"sine",.06); };
+function sweep(f1, f2, d, vol=.07, type="sine"){
+  if (!soundOn) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+    const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime;
+    o.type = type; o.frequency.setValueAtTime(f1, t); o.frequency.exponentialRampToValueAtTime(f2, t+d);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t+d+.08);
+    o.connect(g).connect(actx.destination); o.start(t); o.stop(t+d+.1);
+  }catch(e){}
+}
+const TAP_SOUNDS = [
+  () => sweep(300, 820, .16),                                                       // 뾅
+  () => [1047,1319,1568].forEach((f,i) => tone(f, i*.06, .16, "triangle", .05)),  // 반짝
+  () => { tone(660,0,.07,"sine",.07); tone(880,.07,.1,"sine",.07); },              // 뽀옥
+  () => { sweep(900, 420, .12, .06); setTimeout(() => sweep(420, 980, .14, .06), 110); } // 띠용
+];
+/* 기기에 있는 한국어 음성 중 가장 자연스러운(고급·향상) 음성을 골라요 */
+function bestVoice(lang){
+  try{
+    const pre = lang.slice(0,2).toLowerCase();
+    const vs = speechSynthesis.getVoices().filter(v => (v.lang||"").replace("_","-").toLowerCase().startsWith(pre));
+    if (!vs.length) return null;
+    const score = v => (/premium|프리미엄|高级/i.test(v.name) ? 4 : 0) + (/enhanced|향상|增强|natural/i.test(v.name) ? 3 : 0) + (/yuna|유나|sora|google/i.test(v.name) ? 1 : 0);
+    return vs.slice().sort((a,b) => score(b) - score(a))[0];
+  }catch(e){ return null; }
+}
 function unlockAudio(){
   try{
     actx = actx || new (window.AudioContext||window.webkitAudioContext)();
@@ -573,7 +633,7 @@ function speak(text, lang="ko-KR"){
   try{
     if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text); u.lang = lang; u.rate = 1.0; u.volume = 1;
-    const v = speechSynthesis.getVoices().find(v => v.lang && v.lang.replace("_","-").startsWith(lang.slice(0,2)));
+    const v = bestVoice(lang);
     if (v) u.voice = v;
     speechSynthesis.speak(u);
   }catch(e){}
@@ -590,15 +650,15 @@ function koVoiceMissing(){
 let startLoop;
 let START_LINES;
 function buildLines(){ START_LINES = [
-  [`안녕! 나는 판다 ‘${CHAR.ko}’야. 중국어를 알면 한국어가 쉬워져!`,`你好！我是熊猫“${CHAR.zh}”。会中文的话，学韩语很容易哦！`],
+  [`안녕! 나는 판다 ${CHAR.ko}${ya(CHAR.ko)}. 만나서 반가워!`,`你好呀！我是熊猫${CHAR.zh}，很高兴认识你！`],
   CHAR.custom
-    ? ["내 이름을 지어 줘서 고마워! 우리 같이 힘내자!","谢谢你给我起名字！我们一起加油！"]
-    : ["내 이름은 ‘먹 묵(墨)’ 자에서 왔어. 붓글씨를 제일 좋아하거든!","我叫“墨墨”，因为我最喜欢用毛笔写字！"],
-  ["내 이름표를 누르면 새 이름을 지어 줄 수 있어!","点我的名牌，就能给我起新名字！"],
-  ["중국어 단어를 보고, 소리가 비슷한 한글 카드를 골라 봐!","看中文词语，选出发音相似的韩文卡片吧！"],
-  ["빨리, 그리고 연속으로 맞히면 점수가 쑥쑥 올라가!","答得越快、连对越多，分数就越高！"],
-  ["모르겠으면 게임 중에 나를 눌러. 첫 글자 힌트를 줄게!","不会的时候点我，我告诉你第一个字！"],
-  [`단어가 ${WORDS.length}개나 있어. 주제를 골라 봐!`,`一共有${WORDS.length}个词，选个主题吧！`]
+    ? ["멋진 이름 지어 줘서 고마워. 마음에 쏙 들어!","谢谢你给我起了这么好听的名字，我好喜欢！"]
+    : ["내 이름은 ‘먹 묵(墨)’ 자에서 따왔어. 붓글씨 쓰는 걸 좋아하거든!","我的名字来自“墨”字，因为我最爱写毛笔字啦！"],
+  ["이름표를 누르면 나한테 새 이름도 지어 줄 수 있어.","点一下我的名牌，还可以给我起新名字哦。"],
+  ["중국어 단어를 보고, 소리가 비슷한 한글 카드를 찾아 줘.","看看中文词，帮我找出读音很像的韩文卡片吧。"],
+  ["빨리 맞히고, 연달아 맞히면 점수가 쑥쑥 올라가!","答得快、连着答对，分数就会噌噌往上涨！"],
+  ["잘 모르겠으면 나를 톡 눌러 봐. 첫 글자를 살짝 알려 줄게.","不确定的时候，轻轻点我一下，我偷偷告诉你第一个字。"],
+  [`단어를 ${WORDS.length}개나 준비했어. 어떤 주제부터 해 볼까?`,`我准备了${WORDS.length}个词，先从哪个主题开始呢？`]
 ]; }
 buildLines();
 
@@ -614,7 +674,7 @@ function rename(){
   });
   buildLines();
   clearInterval(startLoop);
-  if (n) say("start", `와! 이제 내 이름은 ‘${n}’야. 고마워!`, `哇！我现在叫“${n}”了，谢谢你！`, "happy");
+  if (n) say("start", `와! 이제 내 이름은 ${n}${ya(n)}. 정말 고마워!`, `哇！我现在叫“${n}”啦，谢谢你！`, "happy");
   else say("start", ...START_LINES[0], "happy");
 }
 document.addEventListener("click", e => { if (e.target.closest("[data-rename]")) rename(); });
@@ -623,8 +683,8 @@ function show(id){
   window.scrollTo(0,0);
   clearInterval(startLoop);
   if (id === "start") {
-    let i = 0; say("start", ...START_LINES[0]);
-    startLoop = setInterval(() => { i = (i+1) % START_LINES.length; say("start", ...START_LINES[i]); }, 5200);
+    let i = 0; say("start", ...START_LINES[0], null, true);
+    startLoop = setInterval(() => { i = (i+1) % START_LINES.length; say("start", ...START_LINES[i], null, true); }, 6000);
   }
 }
 
@@ -636,8 +696,9 @@ function renderChips(){
   $("chips").querySelectorAll(".chip").forEach(b => b.onclick = () => {
     theme = b.dataset.theme; renderChips();
     const [ko,zh] = THEMES[theme];
-    say("start", theme === "all" ? "좋아, 모든 주제에서 골고루 낼게!" : `좋아, ‘${ko}’ 단어로 낼게!`,
-                 theme === "all" ? "好，所有主题都会出题！" : `好，出“${zh}”的题！`, "happy");
+    clearInterval(startLoop);
+    say("start", theme === "all" ? "좋아, 여러 주제에서 골고루 낼게!" : `좋아, ${ko} 단어로 준비할게!`,
+                 theme === "all" ? "好，各种主题都会出哦！" : `好，我来准备“${zh}”的词！`, "happy");
   });
 }
 
@@ -663,11 +724,21 @@ function pickDistractors(w, n){
 }
 
 const PROMPTS = [
-  ["소리가 비슷한 한글 카드를 찾아봐!","找出发音相似的韩文卡片吧！"],
-  ["중국어로 소리 내어 읽어 보면 쉬워!","用中文读一读，就容易啦！"],
-  ["한자 한 글자가 한글 한 글자야!","一个汉字就是一个韩文字哦！"],
-  ["천천히 생각해도 괜찮아!","慢慢想也没关系！"],
-  ["이 단어, 알 것 같지?","这个词，你应该知道吧？"]
+  ["소리가 비슷한 카드, 어디 있을까?","读音很像的卡片在哪儿呢？"],
+  ["중국어로 한 번 읽어 보면 금방 보일 거야.","用中文念一遍，很快就能看出来啦。"],
+  ["한자 한 글자는 한글 한 글자랑 짝꿍이야.","一个汉字配一个韩文字，它们是好朋友哦。"],
+  ["천천히 생각해도 괜찮아.","慢慢想，不着急。"],
+  ["이건 왜지 알 것 같은데?","这个词，你好像认识吧？"],
+  ["눈을 크게 뜨고 잘 봐!","睁大眼睛仔细看哦！"]
+];
+const CHEERS = [["좋았어!","太好了！"],["정답이야!","答对啦！"],["우와, 대단해!","哇，真厉害！"],["역시 너야!","果然是你！"]];
+const TAP_LINES = [
+  ["히히, 간지러워!","嘻嘻，好痒呀！"],
+  ["나 불렀어?","你叫我吗？"],
+  ["오늘도 같이 힘내자!","今天也一起加油吧！"],
+  ["쓰담쓰담, 고마워!","谢谢你摸摸我！"],
+  ["너랑 공부하니까 재밌다!","和你一起学习真开心！"],
+  ["대나무 먹고 싶다~","好想吃竹子呀～"]
 ];
 
 function nextQuestion(){
@@ -682,8 +753,8 @@ function nextQuestion(){
   $("qpinyin").textContent = S.cfg.pinyin ? w.py.join(" ") : "";
   document.querySelector('[data-guide="game"] .momo-wrap').classList.remove("used");
 
-  if (S.idx === 0) say("game","모르면 나를 눌러! 첫 글자 힌트를 줄게","不会就点我！我告诉你第一个字");
-  else if (S.combo >= 3) say("game",`벌써 ${S.combo}연속이야! 이번 것도 맞혀 봐!`,`已经${S.combo}连胜了！这题也拿下吧！`,"happy");
+  if (S.idx === 0) say("game","잘 모르겠으면 나를 톡 눌러 줘. 힌트 줄게!","不会的话就点点我，我给你提示！");
+  else if (S.combo >= 3) say("game",`와, 벌써 ${S.combo}번 연속이야! 이번 것도 가 보자!`,`哇，已经连对${S.combo}题啦！这题也加油！`,"happy");
   else say("game", ...pick(PROMPTS));
 
   const opts = shuffle([w, ...pickDistractors(w, S.cfg.choices-1)]);
@@ -705,8 +776,7 @@ function hint(){
   if (S.hintUsed) { say("game","힌트는 한 문제에 한 번만이야!","每题只能用一次提示哦！"); return; }
   S.hintUsed = true;
   document.querySelector('[data-guide="game"] .momo-wrap').classList.add("used");
-  sfxHint();
-  say("game",`힌트! 첫 글자는 ‘${w.ko[0]}’야. (점수는 절반)`,`提示：第一个字是“${w.ko[0]}”！（得分减半）`,"happy");
+  say("game",`첫 글자는 ‘${w.ko[0]}’${ya(w.ko[0])}. 이번 문제는 점수가 반만 들어가!`,`第一个字是“${w.ko[0]}”哦。这题的分数会减半～`,"happy");
   speak(w.ko[0]);
 }
 
@@ -747,12 +817,12 @@ function answer(choice, btn){
     celebrate(r.left + r.width/2, r.top + r.height/2, S.combo);
     $("stage").classList.remove("flash"); void $("stage").offsetWidth; $("stage").classList.add("flash");
     sfxRight();
-    say("game", pick(["좋았어!","정답!","대단해!","역시!"]), pick(["太棒了！","答对了！","真厉害！"]), "happy");
+    say("game", ...pick(CHEERS), "happy", true);
   } else {
     if (btn) btn.classList.add("wrong");
     S.combo = 0; S.missed.push(w);
     sfxWrong();
-    say("game", choice ? "앗, 아깝다!" : "앗, 시간이 다 됐어!", choice ? "哎呀，差一点！" : "哎呀，时间到了！", "sad");
+    say("game", choice ? "앗, 아깝다!" : "앗, 시간이 다 됐네.", choice ? "哎呀，差一点点！" : "哎呀，时间到了。", "sad", true);
   }
   $("combo").textContent = S.combo;
   speak(w.ko);
@@ -775,16 +845,17 @@ function showReveal(w, ok, choice){
   let ko, zh, mood;
   if (ok) {
     mood = "happy";
-    const pre = S.combo >= 3 ? [`${S.combo}연속 정답! `, `${S.combo}连胜！`] : ["정답! ", "答对了！"];
-    if (w.note)      { ko = pre[0] + "그런데 이건 함정 단어야. 뜻이 조금 달라!"; zh = pre[1] + "不过这是个“陷阱词”，意思不太一样！"; }
-    else if (rel)    { ko = pre[0] + `“${rel.c}”는 한국어로 ‘${rel.k}’야.`; zh = pre[1] + `“${rel.c}”在韩语里读“${rel.k}”。`; }
-    else             { ko = pre[0] + "한자 한 글자가 한글 한 글자가 됐지?"; zh = pre[1] + "一个汉字变成了一个韩文字！"; }
+    const pre = S.combo >= 3 ? [`${S.combo}번 연속 정답! `, `连对${S.combo}题！`] : ["정답! ", "答对啦！"];
+    if (w.note)      { ko = pre[0] + "그런데 이건 함정 단어야. 뜻이 살짝 달라!"; zh = pre[1] + "不过这是个“陷阱词”，意思有点不一样哦！"; }
+    else if (rel)    { ko = pre[0] + `${rel.c}${eun(rel.k)} 한국어로 ‘${rel.k}’${ira(rel.k)}고 읽어.`; zh = pre[1] + `“${rel.c}”在韩语里读作“${rel.k}”。`; }
+    else             { ko = pre[0] + "한자 한 글자가 한글 한 글자로 바뀌었지?"; zh = pre[1] + "一个汉字变成了一个韩文字，对吧？"; }
   } else {
     mood = "sad";
     let i = 0;
     if (choice) { const j = [...w.ko].findIndex(ch => !choice.ko.includes(ch)); if (j >= 0) i = j; }
-    ko = (choice ? "괜찮아! " : "시간 끝! ") + `“${w.zh[i]}”는 ‘${w.ko[i]}’라고 읽어.`;
-    zh = (choice ? "没关系！" : "时间到！") + `“${w.zh[i]}”读作“${w.ko[i]}”。`;
+    const k = w.ko[i], c = w.zh[i];
+    ko = (choice ? "괜찮아. " : "시간이 다 됐어. ") + `${c}${eun(k)} ‘${k}’${ira(k)}고 읽어. 다음엔 꼭 맞힐 거야!`;
+    zh = (choice ? "没关系。" : "时间到啦。") + `“${c}”读作“${k}”，下次一定没问题！`;
   }
   const syl = [...w.zh].map((h,i) => `
     <div class="syl"><div class="h zh">${h}</div><div class="p">${w.py[i]}</div><div class="arrow">↓</div><div class="k">${w.ko[i]}</div></div>`).join("");
@@ -829,10 +900,10 @@ function endGame(){
   animateNumber($("final"), 0, S.score, 1200);
 
   const talk = [
-    ["괜찮아! 처음엔 다 어려워. 한 번 더 해 보자!","没关系！一开始都很难，再来一次吧！","sad"],
-    ["좋아! 아래 단어들을 한 번 더 보면 더 잘할 수 있어.","不错！复习一下下面的词，会更棒哦！",null],
-    ["아주 잘했어! 조금만 더 하면 마스터야!","做得很好！再努力一点就是大师了！","happy"],
-    ["완벽해! 넌 진짜 한자어 마스터야!","太完美了！你是真正的汉字词大师！","happy"]
+    ["처음엔 누구나 어려워. 한 번만 더 해 볼까?","一开始谁都会觉得难，我们再来一次好不好？","sad"],
+    ["잘했어! 아래 단어들만 다시 보면 훨씬 쉬워질 거야.","做得不错！再看看下面这些词，就会简单很多哦。",null],
+    ["정말 잘했어! 조금만 더 하면 마스터야.","真的很棒！再加把劲就是大师啦。","happy"],
+    ["완벽해! 너는 진짜 한자어 마스터야!","太完美了！你就是真正的汉字词大师！","happy"]
   ][stars];
   say("end", talk[0], talk[1], talk[2]);
 
@@ -907,10 +978,36 @@ document.querySelectorAll(".mode").forEach(b => b.addEventListener("click", () =
 $("again").onclick = () => { unlockAudio(); startGame(S.mode); };
 $("tohome").onclick = () => { showBests(); show("start"); };
 $("home").onclick = () => { cancelAnimationFrame(S.raf); clearTimeout(revealT); $("reveal").classList.add("hidden"); showBests(); show("start"); };
-document.querySelector('[data-guide="game"] .momo-wrap').addEventListener("click", hint);
-document.querySelector('[data-guide="start"] .momo-wrap').addEventListener("click", () => {
-  clearInterval(startLoop);
-  say("start", ...pick(START_LINES.slice(1)), "happy");
+/* 캐릭터를 누르면: 동작 + 소리 + 하트·반짝이 */
+function popFx(el){
+  const r = el.getBoundingClientRect(), x0 = r.left + r.width/2, y0 = r.top + r.height*.35;
+  const icons = ["💗","✨","⭐","🌸","🎵","💖"];
+  const n = reduceMotion ? 3 : 7;
+  for (let i = 0; i < n; i++){
+    const d = document.createElement("span"); d.className = "pop-fx"; d.textContent = pick(icons);
+    const a = -Math.PI/2 + (Math.random()-.5)*Math.PI*1.3, dist = 50 + Math.random()*45;
+    d.style.left = x0 + "px"; d.style.top = y0 + "px";
+    d.style.setProperty("--dx", Math.cos(a)*dist + "px"); d.style.setProperty("--dy", Math.sin(a)*dist + "px");
+    d.style.animationDelay = (i*35) + "ms";
+    document.body.appendChild(d); setTimeout(() => d.remove(), 1100 + i*35);
+  }
+}
+function momoReact(wrap){
+  const svg = wrap.querySelector(".momo");
+  const anim = pick(["tap-squish","tap-spin","tap-wiggle"]);
+  svg.classList.remove("tap-squish","tap-spin","tap-wiggle"); void svg.getBoundingClientRect();
+  svg.classList.add(anim); clearTimeout(svg._t); svg._t = setTimeout(() => svg.classList.remove(anim), 800);
+  pick(TAP_SOUNDS)(); popFx(wrap);
+}
+document.addEventListener("click", e => {
+  const wrap = e.target.closest(".momo-wrap"); if (!wrap) return;
+  unlockAudio();
+  momoReact(wrap);
+  const slot = wrap.closest("[data-guide]").dataset.guide;
+  if (slot === "reveal") return;
+  if (slot === "game" && S.current && !S.locked && !S.hintUsed) { hint(); return; }
+  if (slot === "start") clearInterval(startLoop);
+  say(slot, ...pick(TAP_LINES), "happy");
 });
 $("snd").onclick = () => {
   soundOn = !soundOn; $("snd").textContent = soundOn ? "🔊" : "🔇";
